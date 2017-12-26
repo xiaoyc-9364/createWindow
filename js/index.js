@@ -20,7 +20,6 @@ $(document).ready(function() {
         }
 
         createNode() {
-            // const _this = this;
             const options = this.options;
 
             this.$popWindow = $(`<div class="pop-window">
@@ -47,29 +46,29 @@ $(document).ready(function() {
 
         addHandler() {
             const _this = this;
-            // $('.pop-window-close').each(function() {
-            //     $(this).mouseover(function(e) {
-            //         e.stopPropagation();
+            $('.pop-window-close').each(function() { //关闭窗口
+                $(this).mouseover(function(e) {
+                    e.stopPropagation();
 
-            //     });
-            //     $(this).click(function(e) {
-            //         e.stopPropagation();
-            //         // e.preventDefluat();
-            //         $(this).parents('.pop-window').remove();
-            //     });
-            // });
+                });
+                $(this).click(function(e) {
+                    e.stopPropagation();
+                    // e.preventDefluat();
+                    $(this).parents('.pop-window').remove();
+                });
+            });
             
-            // $('.contents-min').each(function() {
-            //     $(this).mouseover(function(e) {
-            //         e.stopPropagation();
-            //     });
-            //     $(this).click(function(e) {
-            //         console.log(e.target);
-            //         e.stopPropagation();
-            //         // e.preventDefluat();
-            //         $(this).parents('.pop-window').find('.pop-window-content').slideToggle();
-            //     });
-            // });
+            $('.contents-min').each(function() { //切换内容显示
+                $(this).mouseover(function(e) {
+                    e.stopPropagation();
+                });
+                $(this).click(function(e) {
+                    console.log(e.target);
+                    e.stopPropagation();
+                    // e.preventDefluat();
+                    $(this).parents('.pop-window').find('.pop-window-content').slideToggle();
+                });
+            });
             const handler = function(e) {
                 const $self = $(this);
 
@@ -184,23 +183,67 @@ $(document).ready(function() {
                     } else {
                         $this.css('cursor', 'auto'); 
                     }
-            
+                });
 
+                $(this).mousedown(function(e) {
+                    const $self = $(this),
+                          windowBorderWidth = Number.parseInt($this.css('borderWidth'), 10),
+                          windowOffsetLeft = $this.offset().left,
+                          windowOffsetTop = $this.offset().top,
+                          windowWidth = $this.outerWidth(),
+                          windowHeight = $this.outerHeight();
 
+                    let diffX = e.pageX,
+                        diffY = e.pageY;
 
+                    let scopeData = {
+                        left: diffX >= windowOffsetLeft && 
+                                diffX <= windowOffsetLeft + windowBorderWidth,   //左边框判断
+                        right: diffX >= windowOffsetLeft + windowWidth - windowBorderWidth && 
+                                diffX <= windowOffsetLeft + windowWidth,        //右边框判断
+                        top: diffY <= windowOffsetTop + windowBorderWidth && 
+                                diffY >= windowOffsetTop,                        //上边框判断
+                        bottom: diffY <= windowOffsetTop+ windowHeight && 
+                                diffY >= windowOffsetTop + windowHeight - windowBorderWidth,  //下边框判断
+                        vertical: diffY <= windowOffsetTop + windowHeight - windowBorderWidth && 
+                                diffY >= windowOffsetTop + windowBorderWidth,   //竖向边框判断
+                        cross: diffX >= windowOffsetLeft + windowBorderWidth && 
+                                diffX <= windowOffsetLeft + windowWidth - windowBorderWidth    //横向边框判断
+                    }
+                    //鼠标悬停左边框
+                    if (scopeData.left && scopeData.vertical) {
+                        $this.css('cursor', 'w-resize');
 
+                    //鼠标悬停右边框
+                    } else if (scopeData.right && scopeData.vertical) {
+                        $this.css('cursor', 'e-resize'); 
+                        
+                    //鼠标悬停上边框
+                    } else if (scopeData.cross && scopeData.top) {
+                        $this.css('cursor', 'n-resize'); 
+                        
+                    //鼠标悬停下边框
+                    } else if (scopeData.cross && scopeData.bottom) {
+                        $this.css('cursor', 's-resize');   
+                    
+                    //鼠标悬停左上边框
+                    } else if (scopeData.left && scopeData.top) {
+                        $this.css('cursor', 'nw-resize');     
+                        
+                    //鼠标悬停右上边框
+                    } else if (scopeData.right && scopeData.top) {
+                        $this.css('cursor', 'ne-resize');   
+                    
+                    //鼠标悬停右下边框
+                    } else if (scopeData.right && scopeData.bottom) {
+                        $this.css('cursor', 'se-resize'); 
 
-
-
-
-
-
-
-
-
-
-
-
+                     //鼠标悬停左下边框
+                    } else if (scopeData.left && scopeData.bottom) {
+                        $this.css('cursor', 'sw-resize');               
+                    } else {
+                        $this.css('cursor', 'auto'); 
+                    }
                 });
             })
         }
