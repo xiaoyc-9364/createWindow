@@ -1,0 +1,117 @@
+.wrapper {
+    width: 1200px;
+    height: 900px;
+    margin: 10px auto;
+    font-size: 14px;
+
+    div {
+        line-height: 20px;
+
+        p {
+            display: inline-block;
+            width: 250px;
+        }
+
+        input {
+            width: 50px;
+            height: 20px;
+            padding-left: 5px;
+            font-size: 16px;
+            margin-bottom: 3px;
+            outline: none;
+
+            &.header-text, &.content-text {
+                width: 240px;
+            }
+        }
+       
+    }
+
+    .create-btn {
+        padding: 3px 10px;
+        border-radius: 10px;
+        margin-left: 200px;
+        cursor: pointer;
+        user-select: none;
+        outline: none;
+        box-sizing: border-box;
+
+        &:hover {
+            box-shadow: 0 -1px 5px #222222 inset;
+            background-color: #7bbdfa;
+        }
+
+    }
+
+    .container {
+        height: 600px;
+        border: 1px solid #999;
+        margin-top: 5px;
+        position: relative;
+    }
+}
+
+.pop-window {
+    border: 5px solid #7bbdfa;
+    border-radius: 5px;
+    box-shadow: 0 0 10px -2px #000;
+    position: absolute;
+    box-sizing: border-box;
+
+    .pop-window-header {
+        height: 40px;
+        line-height: 40px;
+        background-color: #7bbdfa;
+        display: flex;
+        justify-content: space-between;
+        h2 {
+            font-family: '微软雅黑';
+            font-size: 20px;
+            font-weight: bold;
+            padding-left: 30px;
+            background: url(../images/window.png) left center no-repeat;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+
+        .window-control {
+            padding-top: 10px;
+            display: flex;
+            justify-content: flex-end;
+
+            button {
+                display: block;
+                width: 20px;
+                height: 20px;
+                padding: 0 3px;
+                outline: none;
+                border: none;
+
+                &:hover {
+                    background-color: #fff;
+                }
+
+                &.contents-min {
+                    background: transparent url(../images/min.png) no-repeat;
+                }
+
+                &.pop-window-max {
+                    background: transparent url(../images/max2.png) no-repeat;
+                }
+
+                &.pop-window-close {
+                    background: transparent url(../images/close.png) no-repeat;
+                }
+            }
+        }
+       
+    }
+
+    .pop-window-content {
+        font-size: 18px;
+        padding: 5px;
+        background-color: #fff;
+        // height: 200px;
+        border-radius: 0 0 5px 5px;
+    }
+}
