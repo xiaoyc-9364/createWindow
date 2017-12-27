@@ -70,11 +70,14 @@
 .pop-window .pop-window-header h2 {
   font-family: '微软雅黑';
   font-size: 20px;
+  min-width: 200px;
   font-weight: bold;
   padding-left: 30px;
   background: url(../images/window.png) left center no-repeat;
   white-space: nowrap;
+  overflow: hidden;
   text-overflow: ellipsis;
+  user-select: none;
 }
 
 .pop-window .pop-window-header .window-control {
@@ -123,6 +126,11 @@
   text-align: justify;
 }
 
-.noselect {
+.pop-window .pop-window-mask {
+  position: absolute;
+  background-color: rgba(255, 255, 255, 0.393);
+}
+
+.unselect {
   user-select: none;
 }

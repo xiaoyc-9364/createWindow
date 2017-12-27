@@ -1,24 +1,26 @@
 $(document).ready(function() {
     class PopWindow {
         constructor($ele, opts) {
-            const defaults =  {
+            const defaults =  { //默认值
                 title: 'window',
                 content: 'Please enter content!'
             };
 
-            this.$container = $ele;
+            this.$container = $ele;     //容器文件
             this.options = $.extend({}, defaults, opts);
             this.init();
+            this.getCurrentWindow();    //获取当前窗口
         }
 
-        init() {
-            this.createNode();
-            this.destory();
-            this.move();
-            this.minWindow();
-            this.maxWindow();
-            this.getCurrentWindow();
-            this.changeSize();
+        init() {                        //初始化方法
+            this.createNode();          //创建节点方法
+            
+            this.changeCursor();        //修改光标手势
+            this.resize();              //修改窗口尺寸
+            this.move();                //窗口移动方法
+            this.destory();             //关闭窗口方法
+            this.minWindow();           //最小化窗口
+            this.maxWindow();           //最大化窗口
         }
 
         createNode() {
@@ -33,13 +35,14 @@ $(document).ready(function() {
                             <button class="pop-window-close"></button>
                         </div>
                     </div>
-                    <div class="pop-window-content"><p class="content-text">${options.content}</p></div>
+                    <div class="pop-window-content"><p>${options.content}</p></div>
+                    <div class="pop-window-mask"></div>
                 </div>`).css({
                         left: options.left + 'px',
                         top: options.top + 'px',
                         width: options.width + 'px',
                         }).appendTo(this.$container);
-
+            
             this.updateContextHeight(options.height);
                        
         }
@@ -92,375 +95,332 @@ $(document).ready(function() {
         }
 
         move() {
-            const _this = this;
             const handler = function(e) {
-                const $self = $(this);
+                const $this = $(this),
+                      $parent = $this.parent(),
+                      $container = $parent.parent(),
+                      targetName = e.target.nodeName.toLowerCase();
                 //控制窗口的按钮不可用来移动窗口
-                if (e.target.nodeName.toLowerCase() === 'button') {
+                if (targetName === 'button') {
                     return false;
                 } 
 
                 //变换手型
-                $self.css('cursor', 'move');
+                $this.css('cursor', 'move');
 
-                const curX = e.pageX,   //记录鼠标点击时的位置
-                      curY = e.pageY,
-                      windowPosition = _this.$popWindow.position(), //窗口相对容器的偏移量
+                const preX = e.pageX,   //记录鼠标点击时的位置
+                      preY = e.pageY,
+                      windowPosition = $parent.position(), //窗口相对容器的偏移量
                       windowLeft = windowPosition.left,
                       windowTop = windowPosition.top,
-                      windowMaxLeft = _this.$container.width() - _this.$popWindow.outerWidth(),
-                      windowMaxTop = _this.$container.height() - _this.$popWindow.outerHeight();
+                      windowMaxLeft = $container.width() - $parent.outerWidth(),     //窗口最大偏移量
+                      windowMaxTop = $container.height() - $parent.outerHeight();
                     
                 const active = function(e) {
-                    let newX = e.pageX,       //记录鼠标移动时的位置
-                        newY = e.pageY,
-                        newLeft = windowLeft + newX - curX,      //计算得到窗口当前的偏移量
-                        newTop = windowTop + newY - curY;            
+                    let currentX = e.pageX,       //记录鼠标移动时的位置
+                        currentY = e.pageY,
+                        currentLeft = windowLeft + currentX - preX,      //计算得到窗口当前的偏移量
+                        currentTop = windowTop + currentY - preY;            
 
-                    newLeft = Math.max(0, Math.min(newLeft, windowMaxLeft));    //限定偏移量的范围
-                    newTop = Math.max(0, Math.min(newTop, windowMaxTop));
+                    currentLeft = Math.max(0, Math.min(currentLeft, windowMaxLeft));    //限定偏移量的范围
+                    currentTop = Math.max(0, Math.min(currentTop, windowMaxTop));
 
-                    _this.$popWindow.css({      //设置偏移量
-                        left: newLeft + 'px',
-                        top: newTop + 'px'
+                    $parent.css({          //设置偏移量
+                        left: currentLeft + 'px',
+                        top: currentTop + 'px'
                     });
                 };
               
                 $(document).mousemove(active).mouseup(function() {      //鼠标放开时解绑
-                    $self.css('cursor', 'auto');
-                    $(this).unbind('mousemove', active);
+                    $this.css('cursor', 'auto');                        //恢复手势
+                    $(this).off('mousemove', active);                   
                 });
                 
             };
-            this.$popWindow.find('.pop-window-header').mousedown(handler);
+            this.$popWindow.find('.pop-window-header').mousedown(handler);  //窗口头部绑定事件
         }
 
         destory() {
             const _this = this;
-            this.$popWindow.find('.pop-window-close').click(function() {
+            this.$popWindow.find('.pop-window-close').click(function() {    //关闭窗口
                 _this.$popWindow.remove();
             });
         }
 
-        updateContextHeight(newHeight) {
-            const headerHeight = this.$popWindow.find('.pop-window-header').height(),
-                  windowBorderWidth = Number.parseInt(this.$popWindow.css('borderWidth'), 10),
-                  windowHeight = this.$popWindow.outerHeight(),
-                  containerHeight = this.$container.height(),
-                  windowTop = this.$popWindow.position().top,
-                  contentHeight = Math.min(Math.max(newHeight, windowHeight), containerHeight - windowTop) - 
-                                headerHeight - windowBorderWidth * 2;
+        updateContextHeight(newHeight) {        //更新内容尺寸
+            const $window = this.$popWindow,
+                  headerHeight = $window.find('.pop-window-header').height(),      //窗口头部高度
+                  windowBorderWidth = Number.parseInt($window.css('borderWidth'), 10),  //窗口边框宽度
+                  containerHeight = this.$container.height(),   //容器高度
+                  windowTop = $window.position().top;
 
-            this.$popWindow.find('.pop-window-content')
-                           .css({
-                            height: contentHeight  + 'px'
+            let contentHeight = Math.min(newHeight, containerHeight - windowTop);
+                contentHeight = contentHeight - headerHeight - windowBorderWidth * 2;
+
+            $window.find('.pop-window-content')
+                            .css({
+                                height: contentHeight + 'px'
                             });      
         }
 
-        getCurrentWindow() {
+        getCurrentWindow() {    //获取当前元素
             let _this = this;
-            this.$popWindow.mousedown(function(e) {
-                $(this).appendTo(_this.$container)
-                // .css({
-
-                // }).siblings().css({
-                //     boxShadow: 'inset 500px 500px 0 #fff'
-                // });
-            });
+            this.$popWindow.on('mousedown', function(e) {
+                //讲选中的元素置于容器的最顶层，并关闭遮罩层，兄弟元素打开遮罩层
+                $(this).appendTo(_this.$container).find('.pop-window-mask').hide().end()
+                        .siblings().find('.pop-window-mask').show();
+            }).trigger('mousedown');    //创建窗口是模拟一次mousedown事件
         }
 
-        changeSize() {
+        changeCursor() {        //变换手型方法
+            const _this = this;
+                  this.mousePosition = '';      //记录当前光标位置
+            
+            const handler = function(e) {
+                const $this = $(this),
+                      windowBorderWidth = Number.parseInt($this.css('borderWidth'), 10),
+                      windowWidth = $this.outerWidth(),
+                      windowHeight = $this.outerHeight();
+
+                let curX = e.originalEvent.layerX,      //记录光标与窗口外边的相对距离
+                    curY = e.originalEvent.layerY;
+
+                let scopeData = {   
+                    left: curX >= 0 && curX <= windowBorderWidth,   //左边框判断
+                    right: curX >= windowWidth - windowBorderWidth && curX <= windowWidth,  //右边框判断
+                    top: curY <= windowBorderWidth && curY >= 0,    //上边框判断
+                    bottom: curY <= windowHeight && curY >= windowHeight - windowBorderWidth,  //下边框判断
+                    column: curY <= windowHeight - windowBorderWidth && curY >= windowBorderWidth,   //竖向边框判断
+                    row: curX >= windowBorderWidth && curX <= windowWidth - windowBorderWidth    //横向边框判断
+                };
+                
+                if (scopeData.left && scopeData.column) {           //鼠标悬停左边框
+                    $this.css('cursor', 'w-resize');
+                    _this.mousePosition = 'left';
+               
+                } else if (scopeData.right && scopeData.column) {   //鼠标悬停右边框
+                    $this.css('cursor', 'e-resize'); 
+                    _this.mousePosition = 'right';
+                
+                } else if (scopeData.row && scopeData.top) {        //鼠标悬停上边框
+                    $this.css('cursor', 'n-resize'); 
+                    _this.mousePosition = 'top';
+                
+                } else if (scopeData.row && scopeData.bottom) {     //鼠标悬停下边框
+                    $this.css('cursor', 's-resize');   
+                    _this.mousePosition = 'bottom';
+                
+                } else if (scopeData.left && scopeData.top) {       //鼠标悬停左上边框
+                    $this.css('cursor', 'nw-resize');     
+                    _this.mousePosition = 'left-top';
+                    
+                } else if (scopeData.right && scopeData.top) {      //鼠标悬停右上边框
+                    $this.css('cursor', 'ne-resize');   
+                    _this.mousePosition = 'right-top';
+               
+                } else if (scopeData.right && scopeData.bottom) {   //鼠标悬停右下边框
+                    $this.css('cursor', 'se-resize'); 
+                    _this.mousePosition = 'right-bottom';
+
+                 
+                } else if (scopeData.left && scopeData.bottom) {    //鼠标悬停左下边框
+                    $this.css('cursor', 'sw-resize');
+                    _this.mousePosition = 'left-bottom';
+                                   
+                } else {                                            //鼠标不在边框上
+                    $this.css('cursor', 'auto'); 
+                    _this.mousePosition = '';
+                }
+            };
+
+            this.$popWindow.mousemove(handler);
+        }
+
+        resize() {              //窗口缩放方法
             const _this = this,
-                  $document = $(document);
-            this.$popWindow.mousemove(function(e) {
+                  handler = function(e) {
                     const $this = $(this),
                           windowBorderWidth = Number.parseInt($this.css('borderWidth'), 10),
-                          windowOffsetLeft = $this.offset().left,
-                          windowOffsetTop = $this.offset().top,
-                          windowWidth = $this.outerWidth(),
-                          windowHeight = $this.outerHeight();
-
-                    let curX = e.originalEvent.layerX,
-                        curY = e.originalEvent.layerY;
-
-                    let scopeData = {
-                        left: curX >= 0 && curX <= windowBorderWidth,   //左边框判断
-                        right: curX >= windowWidth - windowBorderWidth && curX <= windowWidth,  //右边框判断
-                        top: curY <= windowBorderWidth && curY >= 0,    //上边框判断
-                        bottom: curY <= windowHeight && curY >= windowHeight - windowBorderWidth,  //下边框判断
-                        column: curY <= windowHeight - windowBorderWidth && curY >= windowBorderWidth,   //竖向边框判断
-                        row: curX >= windowBorderWidth && curX <= windowWidth - windowBorderWidth    //横向边框判断
-                    };
-                    //鼠标悬停左边框
-                    if (scopeData.left && scopeData.column) {
-                        $this.css('cursor', 'w-resize');
-                        
-                    //鼠标悬停右边框
-                    } else if (scopeData.right && scopeData.column) {
-                        $this.css('cursor', 'e-resize'); 
-                        
-                    //鼠标悬停上边框
-                    } else if (scopeData.row && scopeData.top) {
-                        $this.css('cursor', 'n-resize'); 
-                        
-                    //鼠标悬停下边框
-                    } else if (scopeData.row && scopeData.bottom) {
-                        $this.css('cursor', 's-resize');   
-                    
-                    //鼠标悬停左上边框
-                    } else if (scopeData.left && scopeData.top) {
-                        $this.css('cursor', 'nw-resize');     
-                        
-                    //鼠标悬停右上边框
-                    } else if (scopeData.right && scopeData.top) {
-                        $this.css('cursor', 'ne-resize');   
-                    
-                    //鼠标悬停右下边框
-                    } else if (scopeData.right && scopeData.bottom) {
-                        $this.css('cursor', 'se-resize'); 
-
-                     //鼠标悬停左下边框
-                    } else if (scopeData.left && scopeData.bottom) {
-                        $this.css('cursor', 'sw-resize');               
-                    } else {
-                        $this.css('cursor', 'auto'); 
-                    }
-                });
-
-            this.$popWindow.mousedown(function(e) {
-                    const $this = $(this),
-                          windowBorderWidth = Number.parseInt($this.css('borderWidth'), 10),
-                          windowOffsetLeft = $this.position().left,
-                          windowOffsetTop = $this.position().top,
-                          windowWidth = $this.outerWidth(),
+                          windowPosition = $this.position(),        //记录窗口当前相对容器的便宜量
+                          windowOffsetLeft = windowPosition.left,
+                          windowOffsetTop = windowPosition.top,
+                          windowWidth = $this.outerWidth(),         //窗口含边框尺寸
                           windowHeight = $this.outerHeight(),
-                          containerWidth = _this.$container.innerWidth(),
+                          containerWidth = _this.$container.innerWidth(),   //容器内框尺寸
                           containerHeight = _this.$container.innerHeight(),
+                          //窗口的最小宽度=标题宽度+控制器宽度+两边的外边框宽度
                           windowMinWidth = $this.find('h2').innerWidth() + $this.find('.window-control').innerWidth() +
-                                            windowBorderWidth * 2,
-                          windowMinHeight = $this.find('.pop-window-header').innerHeight() + 
-                                            $this.find('.pop-window-content p').innerHeight() + windowBorderWidth * 2;
-
-
-                    let curX = e.originalEvent.layerX,
-                        curY = e.originalEvent.layerY,
-                        oldX = e.pageX,
-                        oldY = e.pageY;
-
-                    let scopeData = {
-                        left: curX >= 0 && curX <= windowBorderWidth,   //左边框判断
-                        right: curX >= windowWidth - windowBorderWidth && curX <= windowWidth,  //右边框判断
-                        top: curY <= windowBorderWidth && curY >= 0,    //上边框判断
-                        bottom: curY <= windowHeight && curY >= windowHeight - windowBorderWidth,  //下边框判断
-                        column: curY <= windowHeight - windowBorderWidth && curY >= windowBorderWidth,   //竖向边框判断
-                        row: curX >= windowBorderWidth && curX <= windowWidth - windowBorderWidth    //横向边框判断
-                    };
-                    //鼠标悬停左边框
-                    if (scopeData.left && scopeData.column) {
-                        // $this.css('cursor', 'w-resize');
-                        const active = function(e) {
-                            let nowX = e.pageX,
-                                nowY = e.pageY,
+                                                windowBorderWidth * 2,
+                          //窗口的最小高度=窗口头部高度的3倍+上下边框宽度
+                          windowMinHeight = $this.find('.pop-window-header').innerHeight() * 3 + windowBorderWidth * 2;
+    
+                    let prevX = e.pageX,
+                        prevY = e.pageY,
+                        active = null;
+    
+                    if (_this.mousePosition === 'left') {   //左边缩放
+                        active = function(e) {
+                            let currentX = e.pageX,
                                 windowMaxWidth = windowWidth + windowOffsetLeft,
-                                currentWidth = windowWidth + oldX - nowX,
-                                currentLeft = windowOffsetLeft + nowX - oldX;
-
+                                currentWidth = windowWidth + prevX - currentX,
+                                currentLeft = windowOffsetLeft + currentX - prevX;
+    
                             currentWidth = Math.max(windowMinWidth, Math.min(currentWidth, windowMaxWidth));
                             currentLeft = Math.max(0, Math.min(currentLeft, windowOffsetLeft + windowWidth - windowMinWidth));
-
+    
                             $this.css({
                                 width: currentWidth + 'px',
                                 left: currentLeft + 'px'
                             });
                         };
-
-                        $document.mousemove(active).mouseup(function() {
-                            $(this).off('mousemove', active);
-                        });
-                    //鼠标悬停右边框
-                    } else if (scopeData.right && scopeData.column) {
-                        // $this.css('cursor', 'e-resize');
-                        const active = function(e) {
-                            let nowX = e.pageX,
-                                nowY = e.pageY,
+    
+                    } else if (_this.mousePosition === 'right') {   
+                        active = function(e) {
+                            let currentX = e.pageX,
                                 windowMaxWidth = containerWidth - windowOffsetLeft,
-                                currentWidth = windowWidth + nowX - oldX;
+                                currentWidth = windowWidth + currentX - prevX;
                                  
                             currentWidth = Math.max(windowMinWidth, Math.min(currentWidth, windowMaxWidth));
                             $this.css({
                                 width: currentWidth + 'px'
                             });
                         };
-
-                        $document.mousemove(active).mouseup(function() {
-                            $(this).off('mousemove', active);
-                        });
-                        // _this.updateContextHeight(currentHeight);
-                    //鼠标悬停上边框
-                    } else if (scopeData.row && scopeData.top) {
-                        // $this.css('cursor', 'n-resize'); 
-                        const active = function(e) {
-                            let nowX = e.pageX,
-                                nowY = e.pageY,
+    
+                    } else if (_this.mousePosition === 'top') {
+                        active = function(e) {
+                            let currentY = e.pageY,
                                 windowMaxHeight = windowHeight + windowOffsetTop,
-                                currentHeight = windowHeight + oldY - nowY,
-                                currentTop = windowOffsetTop + nowY - oldY;
-
+                                currentHeight = windowHeight + prevY - currentY,
+                                currentTop = windowOffsetTop + currentY - prevY;
+    
                             currentHeight = Math.max(windowMinHeight, Math.min(currentHeight, windowMaxHeight));
                             currentTop = Math.max(0, Math.min(currentTop, windowOffsetTop + windowHeight - windowMinHeight));
                             $this.css({
-                                height: currentHeight + 'px',
                                 top: currentTop + 'px'
                             });
                             _this.updateContextHeight(currentHeight);
                         };
-
-                        $document.mousemove(active).mouseup(function() {
-                            $(this).off('mousemove', active);
-                        });
-                        
-                    //鼠标悬停下边框
-                    } else if (scopeData.row && scopeData.bottom) {
-                        // $this.css('cursor', 's-resize');  
-                        const active = function(e) {
-                            let nowX = e.pageX,
-                                nowY = e.pageY,
+    
+                    } else if (_this.mousePosition === 'bottom') {
+                        active = function(e) {
+                            let currentY = e.pageY,
                                 windowMaxHeight = containerHeight - windowOffsetTop,
-                                currentHeight = windowHeight + nowY - oldY;
+                                currentHeight = windowHeight + currentY - prevY;
                                  
                             currentHeight = Math.max(windowMinHeight, Math.min(currentHeight, windowMaxHeight));
-                            $this.css({
-                                height: currentHeight + 'px'
-                            });
-                            _this.updateContextHeight(currentHeight);
                             
+                            _this.updateContextHeight(currentHeight);
                         };
-
-                        $document.mousemove(active).mouseup(function() {
-                            $(this).off('mousemove', active);
-                        }); 
-                    
-                    //鼠标悬停左上边框
-                    } else if (scopeData.left && scopeData.top) {
-                        // $this.css('cursor', 'nw-resize');     
-                        const active = function(e) {
-                            let nowX = e.pageX,
-                                nowY = e.pageY,
+    
+                    } else if (_this.mousePosition === 'left-top') {
+                        active = function(e) {
+                            let currentX = e.pageX,
+                                currentY = e.pageY,
                                 windowMaxWidth = windowWidth + windowOffsetLeft,
-                                currentWidth = windowWidth + oldX - nowX,
-                                currentLeft = windowOffsetLeft + nowX - oldX,
+                                currentWidth = windowWidth + prevX - currentX,
+                                currentLeft = windowOffsetLeft + currentX - prevX,
                                 windowMaxHeight = windowHeight + windowOffsetTop,
-                                currentHeight = windowHeight + oldY - nowY,
-                                currentTop = windowOffsetTop + nowY - oldY;
-
+                                currentHeight = windowHeight + prevY - currentY,
+                                currentTop = windowOffsetTop + currentY - prevY;
+    
                             currentHeight = Math.max(windowMinHeight, Math.min(currentHeight, windowMaxHeight));
                             currentTop = Math.max(0, Math.min(currentTop, windowOffsetTop + windowHeight - windowMinHeight));
                             currentWidth = Math.max(windowMinWidth, Math.min(currentWidth, windowMaxWidth));
                             currentLeft = Math.max(0, Math.min(currentLeft, windowOffsetLeft + windowWidth - windowMinWidth));
-
+    
                             $this.css({
                                 width: currentWidth + 'px',
                                 left: currentLeft + 'px',
-                                height: currentHeight + 'px',
                                 top: currentTop + 'px'
                             });
                             _this.updateContextHeight(currentHeight);
                             
                         };
-
-                        $document.mousemove(active).mouseup(function() {
-                            $(this).off('mousemove', active);
-                        });
-                    //鼠标悬停右上边框
-                    } else if (scopeData.right && scopeData.top) {
-                        // $this.css('cursor', 'ne-resize');   
-                        const active = function(e) {
-                            let nowX = e.pageX,
-                                nowY = e.pageY,
+    
+                    } else if (_this.mousePosition === 'right-top') {
+                        active = function(e) {
+                            let currentX = e.pageX,
+                                currentY = e.pageY,
                                 windowMaxWidth = containerWidth - windowOffsetLeft,
-                                currentWidth = windowWidth + nowX - oldX,
+                                currentWidth = windowWidth + currentX - prevX,
                                 windowMaxHeight = windowHeight + windowOffsetTop,
-                                currentHeight = windowHeight + oldY - nowY,
-                                currentTop = windowOffsetTop + nowY - oldY;
-
+                                currentHeight = windowHeight + prevY - currentY,
+                                currentTop = windowOffsetTop + currentY - prevY;
+    
                             currentHeight = Math.max(windowMinHeight, Math.min(currentHeight, windowMaxHeight));
                             currentTop = Math.max(0, Math.min(currentTop, windowOffsetTop + windowHeight - windowMinHeight));
                             currentWidth = Math.max(windowMinWidth, Math.min(currentWidth, windowMaxWidth));
+    
                             $this.css({
                                 width: currentWidth + 'px',
-                                height: currentHeight + 'px',
                                 top: currentTop + 'px'
                             });
                             _this.updateContextHeight(currentHeight);
-                            
                         };
-
-                        $document.mousemove(active).mouseup(function() {
-                            $(this).off('mousemove', active);
-                        });
-                    //鼠标悬停右下边框
-                    } else if (scopeData.right && scopeData.bottom) {
-                        // $this.css('cursor', 'se-resize'); 
-                        const active = function(e) {
-                            let nowX = e.pageX,
-                                nowY = e.pageY,
+    
+                    } else if (_this.mousePosition === 'right-bottom') {
+                        active = function(e) {
+                            let currentX = e.pageX,
+                                currentY = e.pageY,
                                 windowMaxWidth = containerWidth - windowOffsetLeft,
-                                currentWidth = windowWidth + nowX - oldX,
+                                currentWidth = windowWidth + currentX - prevX,
                                 windowMaxHeight = containerHeight - windowOffsetTop,
-                                currentHeight = windowHeight + nowY - oldY;
+                                currentHeight = windowHeight + currentY - prevY;
                                  
                             currentWidth = Math.max(windowMinWidth, Math.min(currentWidth, windowMaxWidth));
                             currentHeight = Math.max(windowMinHeight, Math.min(currentHeight, windowMaxHeight));
                             
                             $this.css({
                                 width: currentWidth + 'px',
-                                height: currentHeight + 'px'
                             });
                             _this.updateContextHeight(currentHeight);
-                            
                         };
-
-                        $document.mousemove(active).mouseup(function() {
-                            $(this).off('mousemove', active);
-                        });
-                     //鼠标悬停左下边框
-                    } else if (scopeData.left && scopeData.bottom) {
-                        // $this.css('cursor', 'sw-resize');
-                        const active = function(e) {
-                            let nowX = e.pageX,
-                                nowY = e.pageY,
+    
+                    } else if (_this.mousePosition === 'left-bottom') {
+                        active = function(e) {
+                            let currentX = e.pageX,
+                                currentY = e.pageY,
                                 windowMaxWidth = windowWidth + windowOffsetLeft,
-                                currentWidth = windowWidth + oldX - nowX,
-                                currentLeft = windowOffsetLeft + nowX - oldX,
+                                currentWidth = windowWidth + prevX - currentX,
+                                currentLeft = windowOffsetLeft + currentX - prevX,
                                 windowMaxHeight = containerHeight - windowOffsetTop,
-                                currentHeight = windowHeight + nowY - oldY;
+                                currentHeight = windowHeight + currentY - prevY;
                                  
                             currentHeight = Math.max(windowMinHeight, Math.min(currentHeight, windowMaxHeight));
-
                             currentWidth = Math.max(windowMinWidth, Math.min(currentWidth, windowMaxWidth));
                             currentLeft = Math.max(0, Math.min(currentLeft, windowOffsetLeft + windowWidth - windowMinWidth));
-
+    
                             $this.css({
                                 width: currentWidth + 'px',
                                 left: currentLeft + 'px',
-                                height: currentHeight + 'px'
                             });
                             _this.updateContextHeight(currentHeight);
-                            
-                        };
-
-                        $document.mousemove(active).mouseup(function() {
-                            $(this).off('mousemove', active);
-                        });               
+                        };               
                     } else {
-                        // $this.css('cursor', 'auto'); 
+                        active = null;
                     }
-                });
-        
+    
+                    $(document).mousemove(active).mouseup(function() {
+                        $(this).off('mousemove', active);
+                        _this.setMask();
+                    });
+    
+                    
+                };
+            this.$popWindow.mousedown(handler);
         }
 
-        resize() {
-
+        setMask() {
+            let windowWidth = this.$popWindow.outerWidth(),
+                windowHeight = this.$popWindow.outerHeight(),
+                windowBorderWidth = Number.parseInt(this.$popWindow.css('borderWidth'), 10);
+            
+            this.$popWindow.find('.pop-window-mask').css({
+                width: windowWidth + 'px',
+                height: windowHeight +'px',
+                left: -windowBorderWidth + 'px',
+                top: -windowBorderWidth + 'px'
+            });
         }
     };
 
