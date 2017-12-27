@@ -289,16 +289,51 @@ $(document).ready(function() {
                         $document.mousemove(active).mouseup(function() {
                             $(this).off('mousemove', active);
                         });
-
-
                         
                     //鼠标悬停上边框
                     } else if (scopeData.row && scopeData.top) {
                         // $this.css('cursor', 'n-resize'); 
+                        const active = function(e) {
+                            let nowX = e.pageX,
+                                nowY = e.pageY,
+                                windowMaxHeight = windowHeight + windowOffsetTop,
+                                currentHeight = windowHeight + oldY - nowY,
+                                currentTop = windowOffsetTop + nowY - oldY;
+
+                            currentHeight = Math.max(windowMinHeight, Math.min(currentHeight, windowMaxHeight));
+                            currentTop = Math.max(0, Math.min(currentTop, windowOffsetTop + windowHeight - windowMinHeight));
+                            console.log(windowMinHeight);
+                            $this.css({
+                                height: currentHeight + 'px',
+                                top: currentTop + 'px'
+                            });
+                            _this.updateContextHeight(currentHeight);
+                        };
+
+                        $document.mousemove(active).mouseup(function() {
+                            $(this).off('mousemove', active);
+                        });
                         
                     //鼠标悬停下边框
                     } else if (scopeData.row && scopeData.bottom) {
-                        // $this.css('cursor', 's-resize');   
+                        // $this.css('cursor', 's-resize');  
+                        const active = function(e) {
+                            let nowX = e.pageX,
+                                nowY = e.pageY,
+                                windowMaxHeight = containerHeight - windowOffsetTop,
+                                currentHeight = windowHeight + nowY - oldY;
+                                 
+                            currentHeight = Math.max(windowMinHeight, Math.min(currentHeight, windowMaxHeight));
+                            $this.css({
+                                height: currentHeight + 'px'
+                            });
+                            _this.updateContextHeight(currentHeight);
+                            
+                        };
+
+                        $document.mousemove(active).mouseup(function() {
+                            $(this).off('mousemove', active);
+                        }); 
                     
                     //鼠标悬停左上边框
                     } else if (scopeData.left && scopeData.top) {

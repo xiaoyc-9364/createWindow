@@ -77,13 +77,14 @@
   background: transparent url(../images/close.png) no-repeat; }
 .pop-window .pop-window-content {
   font-size: 18px;
-  padding: 5px;
   background-color: #fff;
-  border-radius: 0 0 5px 5px;
   box-sizing: border-box; }
 .pop-window .pop-window-content p {
   width: 100%;
-  word-wrap: break-word; }
+  padding: 0 5px;
+  word-wrap: break-word;
+  box-sizing: border-box;
+  text-align: justify; }
 
 .noselect {
   user-select: none; }
