@@ -144,10 +144,16 @@ $(document).ready(function() {
 
         updateContextHeight(newHeight) {
             const headerHeight = this.$popWindow.find('.pop-window-header').height(),
-                  windowBorderWidth = Number.parseInt(this.$popWindow.css('borderWidth'), 10);
+                  windowBorderWidth = Number.parseInt(this.$popWindow.css('borderWidth'), 10),
+                  windowHeight = this.$popWindow.outerHeight(),
+                  containerHeight = this.$container.height(),
+                  windowTop = this.$popWindow.position().top,
+                  contentHeight = Math.min(Math.max(newHeight, windowHeight), containerHeight - windowTop) - 
+                                headerHeight - windowBorderWidth * 2;
+
             this.$popWindow.find('.pop-window-content')
                            .css({
-                            height: newHeight - headerHeight - windowBorderWidth * 2 + 'px'
+                            height: contentHeight  + 'px'
                             });      
         }
 
@@ -289,7 +295,7 @@ $(document).ready(function() {
                         $document.mousemove(active).mouseup(function() {
                             $(this).off('mousemove', active);
                         });
-                        
+                        // _this.updateContextHeight(currentHeight);
                     //鼠标悬停上边框
                     } else if (scopeData.row && scopeData.top) {
                         // $this.css('cursor', 'n-resize'); 
@@ -302,7 +308,6 @@ $(document).ready(function() {
 
                             currentHeight = Math.max(windowMinHeight, Math.min(currentHeight, windowMaxHeight));
                             currentTop = Math.max(0, Math.min(currentTop, windowOffsetTop + windowHeight - windowMinHeight));
-                            console.log(windowMinHeight);
                             $this.css({
                                 height: currentHeight + 'px',
                                 top: currentTop + 'px'
@@ -338,18 +343,115 @@ $(document).ready(function() {
                     //鼠标悬停左上边框
                     } else if (scopeData.left && scopeData.top) {
                         // $this.css('cursor', 'nw-resize');     
-                        
+                        const active = function(e) {
+                            let nowX = e.pageX,
+                                nowY = e.pageY,
+                                windowMaxWidth = windowWidth + windowOffsetLeft,
+                                currentWidth = windowWidth + oldX - nowX,
+                                currentLeft = windowOffsetLeft + nowX - oldX,
+                                windowMaxHeight = windowHeight + windowOffsetTop,
+                                currentHeight = windowHeight + oldY - nowY,
+                                currentTop = windowOffsetTop + nowY - oldY;
+
+                            currentHeight = Math.max(windowMinHeight, Math.min(currentHeight, windowMaxHeight));
+                            currentTop = Math.max(0, Math.min(currentTop, windowOffsetTop + windowHeight - windowMinHeight));
+                            currentWidth = Math.max(windowMinWidth, Math.min(currentWidth, windowMaxWidth));
+                            currentLeft = Math.max(0, Math.min(currentLeft, windowOffsetLeft + windowWidth - windowMinWidth));
+
+                            $this.css({
+                                width: currentWidth + 'px',
+                                left: currentLeft + 'px',
+                                height: currentHeight + 'px',
+                                top: currentTop + 'px'
+                            });
+                            _this.updateContextHeight(currentHeight);
+                            
+                        };
+
+                        $document.mousemove(active).mouseup(function() {
+                            $(this).off('mousemove', active);
+                        });
                     //鼠标悬停右上边框
                     } else if (scopeData.right && scopeData.top) {
                         // $this.css('cursor', 'ne-resize');   
-                    
+                        const active = function(e) {
+                            let nowX = e.pageX,
+                                nowY = e.pageY,
+                                windowMaxWidth = containerWidth - windowOffsetLeft,
+                                currentWidth = windowWidth + nowX - oldX,
+                                windowMaxHeight = windowHeight + windowOffsetTop,
+                                currentHeight = windowHeight + oldY - nowY,
+                                currentTop = windowOffsetTop + nowY - oldY;
+
+                            currentHeight = Math.max(windowMinHeight, Math.min(currentHeight, windowMaxHeight));
+                            currentTop = Math.max(0, Math.min(currentTop, windowOffsetTop + windowHeight - windowMinHeight));
+                            currentWidth = Math.max(windowMinWidth, Math.min(currentWidth, windowMaxWidth));
+                            $this.css({
+                                width: currentWidth + 'px',
+                                height: currentHeight + 'px',
+                                top: currentTop + 'px'
+                            });
+                            _this.updateContextHeight(currentHeight);
+                            
+                        };
+
+                        $document.mousemove(active).mouseup(function() {
+                            $(this).off('mousemove', active);
+                        });
                     //鼠标悬停右下边框
                     } else if (scopeData.right && scopeData.bottom) {
                         // $this.css('cursor', 'se-resize'); 
+                        const active = function(e) {
+                            let nowX = e.pageX,
+                                nowY = e.pageY,
+                                windowMaxWidth = containerWidth - windowOffsetLeft,
+                                currentWidth = windowWidth + nowX - oldX,
+                                windowMaxHeight = containerHeight - windowOffsetTop,
+                                currentHeight = windowHeight + nowY - oldY;
+                                 
+                            currentWidth = Math.max(windowMinWidth, Math.min(currentWidth, windowMaxWidth));
+                            currentHeight = Math.max(windowMinHeight, Math.min(currentHeight, windowMaxHeight));
+                            
+                            $this.css({
+                                width: currentWidth + 'px',
+                                height: currentHeight + 'px'
+                            });
+                            _this.updateContextHeight(currentHeight);
+                            
+                        };
 
+                        $document.mousemove(active).mouseup(function() {
+                            $(this).off('mousemove', active);
+                        });
                      //鼠标悬停左下边框
                     } else if (scopeData.left && scopeData.bottom) {
-                        // $this.css('cursor', 'sw-resize');               
+                        // $this.css('cursor', 'sw-resize');
+                        const active = function(e) {
+                            let nowX = e.pageX,
+                                nowY = e.pageY,
+                                windowMaxWidth = windowWidth + windowOffsetLeft,
+                                currentWidth = windowWidth + oldX - nowX,
+                                currentLeft = windowOffsetLeft + nowX - oldX,
+                                windowMaxHeight = containerHeight - windowOffsetTop,
+                                currentHeight = windowHeight + nowY - oldY;
+                                 
+                            currentHeight = Math.max(windowMinHeight, Math.min(currentHeight, windowMaxHeight));
+
+                            currentWidth = Math.max(windowMinWidth, Math.min(currentWidth, windowMaxWidth));
+                            currentLeft = Math.max(0, Math.min(currentLeft, windowOffsetLeft + windowWidth - windowMinWidth));
+
+                            $this.css({
+                                width: currentWidth + 'px',
+                                left: currentLeft + 'px',
+                                height: currentHeight + 'px'
+                            });
+                            _this.updateContextHeight(currentHeight);
+                            
+                        };
+
+                        $document.mousemove(active).mouseup(function() {
+                            $(this).off('mousemove', active);
+                        });               
                     } else {
                         // $this.css('cursor', 'auto'); 
                     }

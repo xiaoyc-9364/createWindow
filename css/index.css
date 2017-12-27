@@ -78,7 +78,8 @@
 .pop-window .pop-window-content {
   font-size: 18px;
   background-color: #fff;
-  box-sizing: border-box; }
+  box-sizing: border-box;
+  overflow: hidden; }
 .pop-window .pop-window-content p {
   width: 100%;
   padding: 0 5px;

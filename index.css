@@ -112,6 +112,7 @@
   font-size: 18px;
   background-color: #fff;
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 .pop-window .pop-window-content p {
