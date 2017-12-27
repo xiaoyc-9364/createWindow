@@ -16,7 +16,7 @@ $(document).ready(function() {
             this.destory();
             this.move();
             this.minWindow();
-            // this.addHandler();
+            this.maxWindow();
             this.getCurrentWindow();
             this.changeSize();
         }
@@ -33,32 +33,62 @@ $(document).ready(function() {
                             <button class="pop-window-close"></button>
                         </div>
                     </div>
-                    <div class="pop-window-content"><p>${options.content}</p></div>
+                    <div class="pop-window-content"><p class="content-text">${options.content}</p></div>
                 </div>`).css({
                         left: options.left + 'px',
                         top: options.top + 'px',
                         width: options.width + 'px',
-                        // height:options.height + 'px'
-                        })
-                        .appendTo(this.$container);
-            const headerHeight = this.$popWindow.find('.pop-window-header').height();
-            this.$popWindow.find('.pop-window-content').height(options.height - headerHeight);
+                        }).appendTo(this.$container);
+
+            this.updateContextHeight(options.height);
                        
         }
 
         minWindow() {
             const _this = this;
             this.$popWindow.find('.contents-min').click(function() {
-                _this.$popWindow.find('.pop-window-content').slideToggle();
+                _this.$popWindow.find('.pop-window-content').stop().slideToggle();
             });
         }
 
         maxWindow() {
-            const _this = this;
+            const _this = this,
+                  $window = this.$popWindow,
+                  curWindowWidth = $window.width(),
+                  curWindowHeight = $window.height();
+                  
+
+            this.$popWindow.find('.pop-window-max').click(function() {
+                const newWindowWidth = $window.width(),
+                      newWindowHeight = $window.height(),
+                      containerWindth = _this.$container.width(),
+                      containerHeight = _this.$container.height();
+                
+                var isMax = true;
+
+                if (isMax) {
+                    $window.css({
+                            width: containerWindth + 'px',
+                            left: 0,
+                            top: 0,
+                        });
+                    _this.updateContextHeight(containerHeight);
+                    $(this).css('backgroundImage', 'url(./images/max.png)');
+                    isMax = false;
+                } else {
+                    $window.css({
+                            width: _this.options.width + 'px',
+                        });
+                    _this.updateContextHeight(_this.options.height);
+                    $(this).css('backgroundImage', 'url(./images/max2.png)');
+                    isMax = true;
+                }
+
+            });
 
 
 
-            
+
         }
 
         move() {
@@ -95,15 +125,13 @@ $(document).ready(function() {
                         top: newTop + 'px'
                     });
                 };
-
-                const $document = $(document);
-                $document.mousemove(active);        //document绑定鼠标移动事件
-                $document.mouseup(function() {      //鼠标放开时解绑
+              
+                $(document).mousemove(active).mouseup(function() {      //鼠标放开时解绑
                     $self.css('cursor', 'auto');
                     $(this).unbind('mousemove', active);
                 });
                 
-            }
+            };
             this.$popWindow.find('.pop-window-header').mousedown(handler);
         }
 
@@ -114,55 +142,63 @@ $(document).ready(function() {
             });
         }
 
+        updateContextHeight(newHeight) {
+            const headerHeight = this.$popWindow.find('.pop-window-header').height(),
+                  windowBorderWidth = Number.parseInt(this.$popWindow.css('borderWidth'), 10);
+            this.$popWindow.find('.pop-window-content')
+                           .css({
+                            height: newHeight - headerHeight - windowBorderWidth * 2 + 'px'
+                            });      
+        }
+
         getCurrentWindow() {
             let _this = this;
             this.$popWindow.mousedown(function(e) {
-                $(this).appendTo(_this.$container).siblings().css();
+                $(this).appendTo(_this.$container)
+                // .css({
+
+                // }).siblings().css({
+                //     boxShadow: 'inset 500px 500px 0 #fff'
+                // });
             });
         }
 
         changeSize() {
-            this.$popWindow.each(function() {
-                const $this = $(this);
-                $(this).mousemove(function(e) {
-                    const $self = $(this),
+            const _this = this,
+                  $document = $(document);
+            this.$popWindow.mousemove(function(e) {
+                    const $this = $(this),
                           windowBorderWidth = Number.parseInt($this.css('borderWidth'), 10),
                           windowOffsetLeft = $this.offset().left,
                           windowOffsetTop = $this.offset().top,
                           windowWidth = $this.outerWidth(),
                           windowHeight = $this.outerHeight();
 
-                    let diffX = e.pageX,
-                        diffY = e.pageY;
+                    let curX = e.originalEvent.layerX,
+                        curY = e.originalEvent.layerY;
 
                     let scopeData = {
-                        left: diffX >= windowOffsetLeft && 
-                                diffX <= windowOffsetLeft + windowBorderWidth,   //左边框判断
-                        right: diffX >= windowOffsetLeft + windowWidth - windowBorderWidth && 
-                                diffX <= windowOffsetLeft + windowWidth,        //右边框判断
-                        top: diffY <= windowOffsetTop + windowBorderWidth && 
-                                diffY >= windowOffsetTop,                        //上边框判断
-                        bottom: diffY <= windowOffsetTop+ windowHeight && 
-                                diffY >= windowOffsetTop + windowHeight - windowBorderWidth,  //下边框判断
-                        vertical: diffY <= windowOffsetTop + windowHeight - windowBorderWidth && 
-                                diffY >= windowOffsetTop + windowBorderWidth,   //竖向边框判断
-                        cross: diffX >= windowOffsetLeft + windowBorderWidth && 
-                                diffX <= windowOffsetLeft + windowWidth - windowBorderWidth    //横向边框判断
-                    }
+                        left: curX >= 0 && curX <= windowBorderWidth,   //左边框判断
+                        right: curX >= windowWidth - windowBorderWidth && curX <= windowWidth,  //右边框判断
+                        top: curY <= windowBorderWidth && curY >= 0,    //上边框判断
+                        bottom: curY <= windowHeight && curY >= windowHeight - windowBorderWidth,  //下边框判断
+                        column: curY <= windowHeight - windowBorderWidth && curY >= windowBorderWidth,   //竖向边框判断
+                        row: curX >= windowBorderWidth && curX <= windowWidth - windowBorderWidth    //横向边框判断
+                    };
                     //鼠标悬停左边框
-                    if (scopeData.left && scopeData.vertical) {
+                    if (scopeData.left && scopeData.column) {
                         $this.css('cursor', 'w-resize');
                         
                     //鼠标悬停右边框
-                    } else if (scopeData.right && scopeData.vertical) {
+                    } else if (scopeData.right && scopeData.column) {
                         $this.css('cursor', 'e-resize'); 
                         
                     //鼠标悬停上边框
-                    } else if (scopeData.cross && scopeData.top) {
+                    } else if (scopeData.row && scopeData.top) {
                         $this.css('cursor', 'n-resize'); 
                         
                     //鼠标悬停下边框
-                    } else if (scopeData.cross && scopeData.bottom) {
+                    } else if (scopeData.row && scopeData.bottom) {
                         $this.css('cursor', 's-resize');   
                     
                     //鼠标悬停左上边框
@@ -185,69 +221,110 @@ $(document).ready(function() {
                     }
                 });
 
-                $(this).mousedown(function(e) {
-                    const $self = $(this),
+            this.$popWindow.mousedown(function(e) {
+                    const $this = $(this),
                           windowBorderWidth = Number.parseInt($this.css('borderWidth'), 10),
-                          windowOffsetLeft = $this.offset().left,
-                          windowOffsetTop = $this.offset().top,
+                          windowOffsetLeft = $this.position().left,
+                          windowOffsetTop = $this.position().top,
                           windowWidth = $this.outerWidth(),
-                          windowHeight = $this.outerHeight();
+                          windowHeight = $this.outerHeight(),
+                          containerWidth = _this.$container.innerWidth(),
+                          containerHeight = _this.$container.innerHeight(),
+                          windowMinWidth = $this.find('h2').innerWidth() + $this.find('.window-control').innerWidth() +
+                                            windowBorderWidth * 2,
+                          windowMinHeight = $this.find('.pop-window-header').innerHeight() + 
+                                            $this.find('.pop-window-content p').innerHeight() + windowBorderWidth * 2;
 
-                    let diffX = e.pageX,
-                        diffY = e.pageY;
+
+                    let curX = e.originalEvent.layerX,
+                        curY = e.originalEvent.layerY,
+                        oldX = e.pageX,
+                        oldY = e.pageY;
 
                     let scopeData = {
-                        left: diffX >= windowOffsetLeft && 
-                                diffX <= windowOffsetLeft + windowBorderWidth,   //左边框判断
-                        right: diffX >= windowOffsetLeft + windowWidth - windowBorderWidth && 
-                                diffX <= windowOffsetLeft + windowWidth,        //右边框判断
-                        top: diffY <= windowOffsetTop + windowBorderWidth && 
-                                diffY >= windowOffsetTop,                        //上边框判断
-                        bottom: diffY <= windowOffsetTop+ windowHeight && 
-                                diffY >= windowOffsetTop + windowHeight - windowBorderWidth,  //下边框判断
-                        vertical: diffY <= windowOffsetTop + windowHeight - windowBorderWidth && 
-                                diffY >= windowOffsetTop + windowBorderWidth,   //竖向边框判断
-                        cross: diffX >= windowOffsetLeft + windowBorderWidth && 
-                                diffX <= windowOffsetLeft + windowWidth - windowBorderWidth    //横向边框判断
-                    }
+                        left: curX >= 0 && curX <= windowBorderWidth,   //左边框判断
+                        right: curX >= windowWidth - windowBorderWidth && curX <= windowWidth,  //右边框判断
+                        top: curY <= windowBorderWidth && curY >= 0,    //上边框判断
+                        bottom: curY <= windowHeight && curY >= windowHeight - windowBorderWidth,  //下边框判断
+                        column: curY <= windowHeight - windowBorderWidth && curY >= windowBorderWidth,   //竖向边框判断
+                        row: curX >= windowBorderWidth && curX <= windowWidth - windowBorderWidth    //横向边框判断
+                    };
                     //鼠标悬停左边框
-                    if (scopeData.left && scopeData.vertical) {
-                        $this.css('cursor', 'w-resize');
+                    if (scopeData.left && scopeData.column) {
+                        // $this.css('cursor', 'w-resize');
+                        const active = function(e) {
+                            let nowX = e.pageX,
+                                nowY = e.pageY,
+                                windowMaxWidth = windowWidth + windowOffsetLeft,
+                                currentWidth = windowWidth + oldX - nowX,
+                                currentLeft = windowOffsetLeft + nowX - oldX;
 
+                            currentWidth = Math.max(windowMinWidth, Math.min(currentWidth, windowMaxWidth));
+                            currentLeft = Math.max(0, Math.min(currentLeft, windowOffsetLeft + windowWidth - windowMinWidth));
+
+                            $this.css({
+                                width: currentWidth + 'px',
+                                left: currentLeft + 'px'
+                            });
+                        };
+
+                        $document.mousemove(active).mouseup(function() {
+                            $(this).off('mousemove', active);
+                        });
                     //鼠标悬停右边框
-                    } else if (scopeData.right && scopeData.vertical) {
-                        $this.css('cursor', 'e-resize'); 
+                    } else if (scopeData.right && scopeData.column) {
+                        // $this.css('cursor', 'e-resize');
+                        const active = function(e) {
+                            let nowX = e.pageX,
+                                nowY = e.pageY,
+                                windowMaxWidth = containerWidth - windowOffsetLeft,
+                                currentWidth = windowWidth + nowX - oldX;
+                                 
+                            currentWidth = Math.max(windowMinWidth, Math.min(currentWidth, windowMaxWidth));
+                            $this.css({
+                                width: currentWidth + 'px'
+                            });
+                        };
+
+                        $document.mousemove(active).mouseup(function() {
+                            $(this).off('mousemove', active);
+                        });
+
+
                         
                     //鼠标悬停上边框
-                    } else if (scopeData.cross && scopeData.top) {
-                        $this.css('cursor', 'n-resize'); 
+                    } else if (scopeData.row && scopeData.top) {
+                        // $this.css('cursor', 'n-resize'); 
                         
                     //鼠标悬停下边框
-                    } else if (scopeData.cross && scopeData.bottom) {
-                        $this.css('cursor', 's-resize');   
+                    } else if (scopeData.row && scopeData.bottom) {
+                        // $this.css('cursor', 's-resize');   
                     
                     //鼠标悬停左上边框
                     } else if (scopeData.left && scopeData.top) {
-                        $this.css('cursor', 'nw-resize');     
+                        // $this.css('cursor', 'nw-resize');     
                         
                     //鼠标悬停右上边框
                     } else if (scopeData.right && scopeData.top) {
-                        $this.css('cursor', 'ne-resize');   
+                        // $this.css('cursor', 'ne-resize');   
                     
                     //鼠标悬停右下边框
                     } else if (scopeData.right && scopeData.bottom) {
-                        $this.css('cursor', 'se-resize'); 
+                        // $this.css('cursor', 'se-resize'); 
 
                      //鼠标悬停左下边框
                     } else if (scopeData.left && scopeData.bottom) {
-                        $this.css('cursor', 'sw-resize');               
+                        // $this.css('cursor', 'sw-resize');               
                     } else {
-                        $this.css('cursor', 'auto'); 
+                        // $this.css('cursor', 'auto'); 
                     }
                 });
-            })
+        
         }
 
+        resize() {
+
+        }
     };
 
     $('.create-btn').click(function() {

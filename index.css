@@ -51,7 +51,7 @@
 }
 
 .pop-window {
-  border: 5px solid #7bbdfa;
+  border: 10px solid #7bbdfa;
   border-radius: 5px;
   box-shadow: 0 0 10px -2px #000;
   position: absolute;
@@ -113,6 +113,12 @@
   padding: 5px;
   background-color: #fff;
   border-radius: 0 0 5px 5px;
+  box-sizing: border-box;
+}
+
+.pop-window .pop-window-content p {
+  width: 100%;
+  word-wrap: break-word;
 }
 
 .noselect {
