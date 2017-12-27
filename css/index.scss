@@ -57,6 +57,7 @@
     box-shadow: 0 0 10px -2px #000;
     position: absolute;
     box-sizing: border-box;
+    background-color: #fff;
 
     .pop-window-header {
         height: 40px;
@@ -64,6 +65,7 @@
         background-color: #7bbdfa;
         display: flex;
         justify-content: space-between;
+
         h2 {
             font-family: '微软雅黑';
             font-size: 20px;
@@ -114,4 +116,9 @@
         // height: 200px;
         border-radius: 0 0 5px 5px;
     }
+
+   
+}
+.noselect {
+    user-select: none;
 }
