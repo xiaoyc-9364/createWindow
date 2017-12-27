@@ -70,9 +70,9 @@
 .pop-window .pop-window-header h2 {
   font-family: '微软雅黑';
   font-size: 20px;
-  min-width: 200px;
   font-weight: bold;
   padding-left: 30px;
+  display: inline-block;
   background: url(../images/window.png) left center no-repeat;
   white-space: nowrap;
   overflow: hidden;
@@ -123,6 +123,7 @@
   padding: 0 5px;
   word-wrap: break-word;
   box-sizing: border-box;
+  text-overflow: ellipsis;
   text-align: justify;
 }
 

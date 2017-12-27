@@ -9,12 +9,11 @@ $(document).ready(function() {
             this.$container = $ele;     //容器文件
             this.options = $.extend({}, defaults, opts);
             this.init();
-            this.getCurrentWindow();    //获取当前窗口
         }
 
         init() {                        //初始化方法
             this.createNode();          //创建节点方法
-            
+            this.getCurrentWindow();    //获取当前窗口
             this.changeCursor();        //修改光标手势
             this.resize();              //修改窗口尺寸
             this.move();                //窗口移动方法
@@ -49,8 +48,8 @@ $(document).ready(function() {
 
         minWindow() {
             const _this = this;
-            this.$popWindow.find('.contents-min').click(function() {
-                _this.$popWindow.find('.pop-window-content').stop().slideToggle();
+            this.$popWindow.find('.contents-min').click(() => {
+                this.$popWindow.find('.pop-window-content').stop().slideToggle();
             });
         }
 
@@ -95,11 +94,12 @@ $(document).ready(function() {
         }
 
         move() {
-            const handler = function(e) {
-                const $this = $(this),
-                      $parent = $this.parent(),
-                      $container = $parent.parent(),
-                      targetName = e.target.nodeName.toLowerCase();
+            const handler = (e) => {
+                const $parent = this.$popWindow,
+                      $this = $parent.find('.pop-window-header'),
+                      $container = this.$container,
+                      targetName = e.target.nodeName.toLowerCase(),
+                      $document = $(document);
                 //控制窗口的按钮不可用来移动窗口
                 if (targetName === 'button') {
                     return false;
@@ -107,6 +107,7 @@ $(document).ready(function() {
 
                 //变换手型
                 $this.css('cursor', 'move');
+                $parent.find('.pop-window-content p').addClass('unselect');
 
                 const preX = e.pageX,   //记录鼠标点击时的位置
                       preY = e.pageY,
@@ -116,40 +117,42 @@ $(document).ready(function() {
                       windowMaxLeft = $container.width() - $parent.outerWidth(),     //窗口最大偏移量
                       windowMaxTop = $container.height() - $parent.outerHeight();
                     
-                const active = function(e) {
-                    let currentX = e.pageX,       //记录鼠标移动时的位置
-                        currentY = e.pageY,
-                        currentLeft = windowLeft + currentX - preX,      //计算得到窗口当前的偏移量
-                        currentTop = windowTop + currentY - preY;            
+                const active = (e) => {
+                        let currentX = e.pageX,       //记录鼠标移动时的位置
+                            currentY = e.pageY,
+                            currentLeft = windowLeft + currentX - preX,      //计算得到窗口当前的偏移量
+                            currentTop = windowTop + currentY - preY;            
 
-                    currentLeft = Math.max(0, Math.min(currentLeft, windowMaxLeft));    //限定偏移量的范围
-                    currentTop = Math.max(0, Math.min(currentTop, windowMaxTop));
+                        currentLeft = Math.max(0, Math.min(currentLeft, windowMaxLeft));    //限定偏移量的范围
+                        currentTop = Math.max(0, Math.min(currentTop, windowMaxTop));
 
-                    $parent.css({          //设置偏移量
-                        left: currentLeft + 'px',
-                        top: currentTop + 'px'
-                    });
-                };
+                        $parent.css({          //设置偏移量
+                            left: currentLeft + 'px',
+                            top: currentTop + 'px'
+                        });
+                    },
+                    offActive = () => {                     //鼠标放开时解绑
+                        $this.css('cursor', 'auto');        //恢复手势
+                        $parent.find('.pop-window-content p').removeClass('unselect');
+                        $document.off('mousemove', active);                   
+                    };
               
-                $(document).mousemove(active).mouseup(function() {      //鼠标放开时解绑
-                    $this.css('cursor', 'auto');                        //恢复手势
-                    $(this).off('mousemove', active);                   
-                });
-                
+                $document.mousemove(active).mouseup(offActive);
             };
+
             this.$popWindow.find('.pop-window-header').mousedown(handler);  //窗口头部绑定事件
         }
 
         destory() {
-            const _this = this;
-            this.$popWindow.find('.pop-window-close').click(function() {    //关闭窗口
-                _this.$popWindow.remove();
+            this.$popWindow.find('.pop-window-close').on('click', () => {    //关闭窗口
+                //打开当前关闭窗口的上一个窗口的遮罩
+                this.$popWindow.prev().find('.pop-window-mask').hide().end().end().remove();
             });
         }
 
         updateContextHeight(newHeight) {        //更新内容尺寸
             const $window = this.$popWindow,
-                  headerHeight = $window.find('.pop-window-header').height(),      //窗口头部高度
+                  headerHeight = $window.find('.pop-window-header').height(),           //窗口头部高度
                   windowBorderWidth = Number.parseInt($window.css('borderWidth'), 10),  //窗口边框宽度
                   containerHeight = this.$container.height(),   //容器高度
                   windowTop = $window.position().top;
@@ -165,19 +168,19 @@ $(document).ready(function() {
 
         getCurrentWindow() {    //获取当前元素
             let _this = this;
-            this.$popWindow.on('mousedown', function(e) {
+            const hanlder = (e) => {
                 //讲选中的元素置于容器的最顶层，并关闭遮罩层，兄弟元素打开遮罩层
-                $(this).appendTo(_this.$container).find('.pop-window-mask').hide().end()
+                this.$popWindow.appendTo(this.$container).find('.pop-window-mask').hide().end()
                         .siblings().find('.pop-window-mask').show();
-            }).trigger('mousedown');    //创建窗口是模拟一次mousedown事件
+            };
+            this.$popWindow.on('mousedown', hanlder).trigger('mousedown');    //创建窗口是模拟一次mousedown事件
         }
 
         changeCursor() {        //变换手型方法
-            const _this = this;
-                  this.mousePosition = '';      //记录当前光标位置
+            this.mousePosition = '';      //记录当前光标位置
             
-            const handler = function(e) {
-                const $this = $(this),
+            const handler = (e) => {
+                const $this = this.$popWindow,
                       windowBorderWidth = Number.parseInt($this.css('borderWidth'), 10),
                       windowWidth = $this.outerWidth(),
                       windowHeight = $this.outerHeight();
@@ -196,40 +199,39 @@ $(document).ready(function() {
                 
                 if (scopeData.left && scopeData.column) {           //鼠标悬停左边框
                     $this.css('cursor', 'w-resize');
-                    _this.mousePosition = 'left';
+                    this.mousePosition = 'left';
                
                 } else if (scopeData.right && scopeData.column) {   //鼠标悬停右边框
                     $this.css('cursor', 'e-resize'); 
-                    _this.mousePosition = 'right';
+                    this.mousePosition = 'right';
                 
                 } else if (scopeData.row && scopeData.top) {        //鼠标悬停上边框
                     $this.css('cursor', 'n-resize'); 
-                    _this.mousePosition = 'top';
+                    this.mousePosition = 'top';
                 
                 } else if (scopeData.row && scopeData.bottom) {     //鼠标悬停下边框
                     $this.css('cursor', 's-resize');   
-                    _this.mousePosition = 'bottom';
+                    this.mousePosition = 'bottom';
                 
                 } else if (scopeData.left && scopeData.top) {       //鼠标悬停左上边框
                     $this.css('cursor', 'nw-resize');     
-                    _this.mousePosition = 'left-top';
+                    this.mousePosition = 'left-top';
                     
                 } else if (scopeData.right && scopeData.top) {      //鼠标悬停右上边框
                     $this.css('cursor', 'ne-resize');   
-                    _this.mousePosition = 'right-top';
+                    this.mousePosition = 'right-top';
                
                 } else if (scopeData.right && scopeData.bottom) {   //鼠标悬停右下边框
                     $this.css('cursor', 'se-resize'); 
-                    _this.mousePosition = 'right-bottom';
+                    this.mousePosition = 'right-bottom';
 
-                 
                 } else if (scopeData.left && scopeData.bottom) {    //鼠标悬停左下边框
                     $this.css('cursor', 'sw-resize');
-                    _this.mousePosition = 'left-bottom';
+                    this.mousePosition = 'left-bottom';
                                    
                 } else {                                            //鼠标不在边框上
                     $this.css('cursor', 'auto'); 
-                    _this.mousePosition = '';
+                    this.mousePosition = '';
                 }
             };
 
@@ -237,29 +239,29 @@ $(document).ready(function() {
         }
 
         resize() {              //窗口缩放方法
-            const _this = this,
-                  handler = function(e) {
-                    const $this = $(this),
+            const $document = $(document),
+                  handler = (e) => {
+                    const $this = this.$popWindow,
                           windowBorderWidth = Number.parseInt($this.css('borderWidth'), 10),
                           windowPosition = $this.position(),        //记录窗口当前相对容器的便宜量
                           windowOffsetLeft = windowPosition.left,
                           windowOffsetTop = windowPosition.top,
                           windowWidth = $this.outerWidth(),         //窗口含边框尺寸
                           windowHeight = $this.outerHeight(),
-                          containerWidth = _this.$container.innerWidth(),   //容器内框尺寸
-                          containerHeight = _this.$container.innerHeight(),
+                          containerWidth = this.$container.innerWidth(),   //容器内框尺寸
+                          containerHeight = this.$container.innerHeight(),
                           //窗口的最小宽度=标题宽度+控制器宽度+两边的外边框宽度
                           windowMinWidth = $this.find('h2').innerWidth() + $this.find('.window-control').innerWidth() +
                                                 windowBorderWidth * 2,
                           //窗口的最小高度=窗口头部高度的3倍+上下边框宽度
                           windowMinHeight = $this.find('.pop-window-header').innerHeight() * 3 + windowBorderWidth * 2;
     
-                    let prevX = e.pageX,
+                    let prevX = e.pageX,    //记录当前光标位置
                         prevY = e.pageY,
-                        active = null;
-    
-                    if (_this.mousePosition === 'left') {   //左边缩放
-                        active = function(e) {
+                        active = null;      
+
+                    if (this.mousePosition === 'left') {   //左边缩放
+                        active = (e) => {
                             let currentX = e.pageX,
                                 windowMaxWidth = windowWidth + windowOffsetLeft,
                                 currentWidth = windowWidth + prevX - currentX,
@@ -273,9 +275,9 @@ $(document).ready(function() {
                                 left: currentLeft + 'px'
                             });
                         };
-    
-                    } else if (_this.mousePosition === 'right') {   
-                        active = function(e) {
+
+                    } else if (this.mousePosition === 'right') {   
+                        active = (e) => {
                             let currentX = e.pageX,
                                 windowMaxWidth = containerWidth - windowOffsetLeft,
                                 currentWidth = windowWidth + currentX - prevX;
@@ -285,9 +287,9 @@ $(document).ready(function() {
                                 width: currentWidth + 'px'
                             });
                         };
-    
-                    } else if (_this.mousePosition === 'top') {
-                        active = function(e) {
+
+                    } else if (this.mousePosition === 'top') {
+                        active = (e) => {
                             let currentY = e.pageY,
                                 windowMaxHeight = windowHeight + windowOffsetTop,
                                 currentHeight = windowHeight + prevY - currentY,
@@ -298,22 +300,22 @@ $(document).ready(function() {
                             $this.css({
                                 top: currentTop + 'px'
                             });
-                            _this.updateContextHeight(currentHeight);
+                            this.updateContextHeight(currentHeight);
                         };
     
-                    } else if (_this.mousePosition === 'bottom') {
-                        active = function(e) {
+                    } else if (this.mousePosition === 'bottom') {
+                        active = (e) => {
                             let currentY = e.pageY,
                                 windowMaxHeight = containerHeight - windowOffsetTop,
                                 currentHeight = windowHeight + currentY - prevY;
                                  
                             currentHeight = Math.max(windowMinHeight, Math.min(currentHeight, windowMaxHeight));
                             
-                            _this.updateContextHeight(currentHeight);
+                            this.updateContextHeight(currentHeight);
                         };
     
-                    } else if (_this.mousePosition === 'left-top') {
-                        active = function(e) {
+                    } else if (this.mousePosition === 'left-top') {
+                        active = (e) => {
                             let currentX = e.pageX,
                                 currentY = e.pageY,
                                 windowMaxWidth = windowWidth + windowOffsetLeft,
@@ -333,12 +335,12 @@ $(document).ready(function() {
                                 left: currentLeft + 'px',
                                 top: currentTop + 'px'
                             });
-                            _this.updateContextHeight(currentHeight);
+                            this.updateContextHeight(currentHeight);
                             
                         };
     
-                    } else if (_this.mousePosition === 'right-top') {
-                        active = function(e) {
+                    } else if (this.mousePosition === 'right-top') {
+                        active = (e) => {
                             let currentX = e.pageX,
                                 currentY = e.pageY,
                                 windowMaxWidth = containerWidth - windowOffsetLeft,
@@ -355,11 +357,11 @@ $(document).ready(function() {
                                 width: currentWidth + 'px',
                                 top: currentTop + 'px'
                             });
-                            _this.updateContextHeight(currentHeight);
+                            this.updateContextHeight(currentHeight);
                         };
     
-                    } else if (_this.mousePosition === 'right-bottom') {
-                        active = function(e) {
+                    } else if (this.mousePosition === 'right-bottom') {
+                        active = (e) => {
                             let currentX = e.pageX,
                                 currentY = e.pageY,
                                 windowMaxWidth = containerWidth - windowOffsetLeft,
@@ -373,11 +375,11 @@ $(document).ready(function() {
                             $this.css({
                                 width: currentWidth + 'px',
                             });
-                            _this.updateContextHeight(currentHeight);
+                            this.updateContextHeight(currentHeight);
                         };
     
-                    } else if (_this.mousePosition === 'left-bottom') {
-                        active = function(e) {
+                    } else if (this.mousePosition === 'left-bottom') {
+                        active = (e) => {
                             let currentX = e.pageX,
                                 currentY = e.pageY,
                                 windowMaxWidth = windowWidth + windowOffsetLeft,
@@ -394,23 +396,22 @@ $(document).ready(function() {
                                 width: currentWidth + 'px',
                                 left: currentLeft + 'px',
                             });
-                            _this.updateContextHeight(currentHeight);
+                            this.updateContextHeight(currentHeight);
                         };               
                     } else {
                         active = null;
                     }
-    
-                    $(document).mousemove(active).mouseup(function() {
-                        $(this).off('mousemove', active);
-                        _this.setMask();
-                    });
-    
                     
+                    let offActive = () => {
+                        $document.off('mousemove', active);
+                        this.setMask();
+                        };
+                    $document.mousemove(active).mouseup(offActive);
                 };
             this.$popWindow.mousedown(handler);
         }
 
-        setMask() {
+        setMask() {             //设置遮罩层
             let windowWidth = this.$popWindow.outerWidth(),
                 windowHeight = this.$popWindow.outerHeight(),
                 windowBorderWidth = Number.parseInt(this.$popWindow.css('borderWidth'), 10);
