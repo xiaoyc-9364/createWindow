@@ -13,13 +13,14 @@ $(document).ready(function() {
 
         init() {                        //初始化方法
             this.createNode();          //创建节点方法
-            this.getCurrentWindow();    //获取当前窗口
             this.changeCursor();        //修改光标手势
             this.resize();              //修改窗口尺寸
-            this.move();                //窗口移动方法
+            this.moveWindow();                //窗口移动方法
             this.destory();             //关闭窗口方法
             this.minWindow();           //最小化窗口
             this.maxWindow();           //最大化窗口
+            this.getCurrentWindow();    //获取当前窗口
+            
         }
 
         createNode() {
@@ -93,8 +94,9 @@ $(document).ready(function() {
 
         }
 
-        move() {
+        moveWindow() {
             const handler = (e) => {
+                e.stopPropagation();
                 const $parent = this.$popWindow,
                       $this = $parent.find('.pop-window-header'),
                       $container = this.$container,
@@ -140,7 +142,7 @@ $(document).ready(function() {
                 $document.mousemove(active).mouseup(offActive);
             };
 
-            this.$popWindow.find('.pop-window-header').mousedown(handler);  //窗口头部绑定事件
+            this.$popWindow.find('.pop-window-header').mousedown(handler).mouseup();  //窗口头部绑定事件
         }
 
         destory() {
@@ -167,13 +169,12 @@ $(document).ready(function() {
         }
 
         getCurrentWindow() {    //获取当前元素
-            let _this = this;
             const hanlder = (e) => {
                 //讲选中的元素置于容器的最顶层，并关闭遮罩层，兄弟元素打开遮罩层
                 this.$popWindow.appendTo(this.$container).find('.pop-window-mask').hide().end()
                         .siblings().find('.pop-window-mask').show();
             };
-            this.$popWindow.on('mousedown', hanlder).trigger('mousedown');    //创建窗口是模拟一次mousedown事件
+            this.$popWindow.on('mousedown', hanlder).trigger('mousedown', hanlder);    //创建窗口是模拟一次mousedown事件
         }
 
         changeCursor() {        //变换手型方法
@@ -181,22 +182,31 @@ $(document).ready(function() {
             
             const handler = (e) => {
                 const $this = this.$popWindow,
-                      windowBorderWidth = Number.parseInt($this.css('borderWidth'), 10),
-                      windowWidth = $this.outerWidth(),
-                      windowHeight = $this.outerHeight();
+                    windowBorderWidth = Number.parseInt($this.css('borderWidth'), 10),
+                    windowOffset = $this.offset(),
+                    windowOffsetLeft = windowOffset.left,
+                    windowOffsetTop = windowOffset.top,
+                    windowWidth = $this.outerWidth(),
+                    windowHeight = $this.outerHeight();
 
-                let curX = e.originalEvent.layerX,      //记录光标与窗口外边的相对距离
-                    curY = e.originalEvent.layerY;
+                let currentX = e.pageX,
+                    currentY = e.pageY;
 
-                let scopeData = {   
-                    left: curX >= 0 && curX <= windowBorderWidth,   //左边框判断
-                    right: curX >= windowWidth - windowBorderWidth && curX <= windowWidth,  //右边框判断
-                    top: curY <= windowBorderWidth && curY >= 0,    //上边框判断
-                    bottom: curY <= windowHeight && curY >= windowHeight - windowBorderWidth,  //下边框判断
-                    column: curY <= windowHeight - windowBorderWidth && curY >= windowBorderWidth,   //竖向边框判断
-                    row: curX >= windowBorderWidth && curX <= windowWidth - windowBorderWidth    //横向边框判断
-                };
-                
+                let scopeData = {
+                        left: currentX >= windowOffsetLeft && 
+                                currentX <= windowOffsetLeft + windowBorderWidth,   //左边框判断
+                        right: currentX >= windowOffsetLeft + windowWidth - windowBorderWidth && 
+                                currentX <= windowOffsetLeft + windowWidth,        //右边框判断
+                        top: currentY <= windowOffsetTop + windowBorderWidth && 
+                                currentY >= windowOffsetTop,                        //上边框判断
+                        bottom: currentY <= windowOffsetTop+ windowHeight && 
+                                currentY >= windowOffsetTop + windowHeight - windowBorderWidth,  //下边框判断
+                        column: currentY <= windowOffsetTop + windowHeight - windowBorderWidth && 
+                                currentY >= windowOffsetTop + windowBorderWidth,   //竖向边框判断
+                        row: currentX >= windowOffsetLeft + windowBorderWidth && 
+                                currentX <= windowOffsetLeft + windowWidth - windowBorderWidth    //横向边框判断
+                    };
+
                 if (scopeData.left && scopeData.column) {           //鼠标悬停左边框
                     $this.css('cursor', 'w-resize');
                     this.mousePosition = 'left';
@@ -240,7 +250,7 @@ $(document).ready(function() {
 
         resize() {              //窗口缩放方法
             const $document = $(document),
-                  handler = (e) => {
+                handler = (e) => {
                     const $this = this.$popWindow,
                           windowBorderWidth = Number.parseInt($this.css('borderWidth'), 10),
                           windowPosition = $this.position(),        //记录窗口当前相对容器的便宜量
@@ -258,156 +268,121 @@ $(document).ready(function() {
     
                     let prevX = e.pageX,    //记录当前光标位置
                         prevY = e.pageY,
-                        active = null;      
+                        active1 = null,
+                        active2 = null;      
 
-                    if (this.mousePosition === 'left') {   //左边缩放
-                        active = (e) => {
-                            let currentX = e.pageX,
-                                windowMaxWidth = windowWidth + windowOffsetLeft,
-                                currentWidth = windowWidth + prevX - currentX,
-                                currentLeft = windowOffsetLeft + currentX - prevX;
-    
-                            currentWidth = Math.max(windowMinWidth, Math.min(currentWidth, windowMaxWidth));
-                            currentLeft = Math.max(0, Math.min(currentLeft, windowOffsetLeft + windowWidth - windowMinWidth));
-    
-                            $this.css({
-                                width: currentWidth + 'px',
-                                left: currentLeft + 'px'
-                            });
+                    const scaleLeft = () => {
+                            return (e) => {
+                                let currentX = e.pageX,
+                                    windowMaxWidth = windowWidth + windowOffsetLeft,
+                                    currentWidth = windowWidth + prevX - currentX,
+                                    currentLeft = windowOffsetLeft + currentX - prevX;
+        
+                                currentWidth = Math.max(windowMinWidth, Math.min(currentWidth, windowMaxWidth));
+                                currentLeft = Math.max(0, Math.min(currentLeft, windowOffsetLeft + windowWidth - windowMinWidth));
+        
+                                $this.css({
+                                    width: currentWidth + 'px',
+                                    left: currentLeft + 'px'
+                                });
+                            };
+                        },
+
+                        scaleTop = () => {
+                            return (e) => {
+                                let currentY = e.pageY,
+                                    windowMaxHeight = windowHeight + windowOffsetTop,
+                                    currentHeight = windowHeight + prevY - currentY,
+                                    currentTop = windowOffsetTop + currentY - prevY;
+        
+                                currentHeight = Math.max(windowMinHeight, Math.min(currentHeight, windowMaxHeight));
+                                currentTop = Math.max(0, Math.min(currentTop, windowOffsetTop + windowHeight - windowMinHeight));
+                                $this.css({
+                                    top: currentTop + 'px'
+                                });
+                                this.updateContextHeight(currentHeight);
+                            };
+                        },
+
+                        scaleRight = () => {
+                            return (e) => {
+                                let currentX = e.pageX,
+                                    windowMaxWidth = containerWidth - windowOffsetLeft,
+                                    currentWidth = windowWidth + currentX - prevX;
+                                    
+                                currentWidth = Math.max(windowMinWidth, Math.min(currentWidth, windowMaxWidth));
+                                $this.css({
+                                    width: currentWidth + 'px'
+                                });
+                            };
+                        },
+
+                        scaleBottom = () => {
+                            return (e) => {
+                                let currentY = e.pageY,
+                                    windowMaxHeight = containerHeight - windowOffsetTop,
+                                    currentHeight = windowHeight + currentY - prevY;
+                                    
+                                currentHeight = Math.max(windowMinHeight, Math.min(currentHeight, windowMaxHeight));
+                                
+                                this.updateContextHeight(currentHeight);
+                            };
                         };
 
-                    } else if (this.mousePosition === 'right') {   
-                        active = (e) => {
-                            let currentX = e.pageX,
-                                windowMaxWidth = containerWidth - windowOffsetLeft,
-                                currentWidth = windowWidth + currentX - prevX;
-                                 
-                            currentWidth = Math.max(windowMinWidth, Math.min(currentWidth, windowMaxWidth));
-                            $this.css({
-                                width: currentWidth + 'px'
-                            });
-                        };
+                    switch (this.mousePosition) {
+                        case 'left':
+                            active1 = scaleLeft();
+                            active2 = null;
+                            break;
 
-                    } else if (this.mousePosition === 'top') {
-                        active = (e) => {
-                            let currentY = e.pageY,
-                                windowMaxHeight = windowHeight + windowOffsetTop,
-                                currentHeight = windowHeight + prevY - currentY,
-                                currentTop = windowOffsetTop + currentY - prevY;
-    
-                            currentHeight = Math.max(windowMinHeight, Math.min(currentHeight, windowMaxHeight));
-                            currentTop = Math.max(0, Math.min(currentTop, windowOffsetTop + windowHeight - windowMinHeight));
-                            $this.css({
-                                top: currentTop + 'px'
-                            });
-                            this.updateContextHeight(currentHeight);
-                        };
-    
-                    } else if (this.mousePosition === 'bottom') {
-                        active = (e) => {
-                            let currentY = e.pageY,
-                                windowMaxHeight = containerHeight - windowOffsetTop,
-                                currentHeight = windowHeight + currentY - prevY;
-                                 
-                            currentHeight = Math.max(windowMinHeight, Math.min(currentHeight, windowMaxHeight));
-                            
-                            this.updateContextHeight(currentHeight);
-                        };
-    
-                    } else if (this.mousePosition === 'left-top') {
-                        active = (e) => {
-                            let currentX = e.pageX,
-                                currentY = e.pageY,
-                                windowMaxWidth = windowWidth + windowOffsetLeft,
-                                currentWidth = windowWidth + prevX - currentX,
-                                currentLeft = windowOffsetLeft + currentX - prevX,
-                                windowMaxHeight = windowHeight + windowOffsetTop,
-                                currentHeight = windowHeight + prevY - currentY,
-                                currentTop = windowOffsetTop + currentY - prevY;
-    
-                            currentHeight = Math.max(windowMinHeight, Math.min(currentHeight, windowMaxHeight));
-                            currentTop = Math.max(0, Math.min(currentTop, windowOffsetTop + windowHeight - windowMinHeight));
-                            currentWidth = Math.max(windowMinWidth, Math.min(currentWidth, windowMaxWidth));
-                            currentLeft = Math.max(0, Math.min(currentLeft, windowOffsetLeft + windowWidth - windowMinWidth));
-    
-                            $this.css({
-                                width: currentWidth + 'px',
-                                left: currentLeft + 'px',
-                                top: currentTop + 'px'
-                            });
-                            this.updateContextHeight(currentHeight);
-                            
-                        };
-    
-                    } else if (this.mousePosition === 'right-top') {
-                        active = (e) => {
-                            let currentX = e.pageX,
-                                currentY = e.pageY,
-                                windowMaxWidth = containerWidth - windowOffsetLeft,
-                                currentWidth = windowWidth + currentX - prevX,
-                                windowMaxHeight = windowHeight + windowOffsetTop,
-                                currentHeight = windowHeight + prevY - currentY,
-                                currentTop = windowOffsetTop + currentY - prevY;
-    
-                            currentHeight = Math.max(windowMinHeight, Math.min(currentHeight, windowMaxHeight));
-                            currentTop = Math.max(0, Math.min(currentTop, windowOffsetTop + windowHeight - windowMinHeight));
-                            currentWidth = Math.max(windowMinWidth, Math.min(currentWidth, windowMaxWidth));
-    
-                            $this.css({
-                                width: currentWidth + 'px',
-                                top: currentTop + 'px'
-                            });
-                            this.updateContextHeight(currentHeight);
-                        };
-    
-                    } else if (this.mousePosition === 'right-bottom') {
-                        active = (e) => {
-                            let currentX = e.pageX,
-                                currentY = e.pageY,
-                                windowMaxWidth = containerWidth - windowOffsetLeft,
-                                currentWidth = windowWidth + currentX - prevX,
-                                windowMaxHeight = containerHeight - windowOffsetTop,
-                                currentHeight = windowHeight + currentY - prevY;
-                                 
-                            currentWidth = Math.max(windowMinWidth, Math.min(currentWidth, windowMaxWidth));
-                            currentHeight = Math.max(windowMinHeight, Math.min(currentHeight, windowMaxHeight));
-                            
-                            $this.css({
-                                width: currentWidth + 'px',
-                            });
-                            this.updateContextHeight(currentHeight);
-                        };
-    
-                    } else if (this.mousePosition === 'left-bottom') {
-                        active = (e) => {
-                            let currentX = e.pageX,
-                                currentY = e.pageY,
-                                windowMaxWidth = windowWidth + windowOffsetLeft,
-                                currentWidth = windowWidth + prevX - currentX,
-                                currentLeft = windowOffsetLeft + currentX - prevX,
-                                windowMaxHeight = containerHeight - windowOffsetTop,
-                                currentHeight = windowHeight + currentY - prevY;
-                                 
-                            currentHeight = Math.max(windowMinHeight, Math.min(currentHeight, windowMaxHeight));
-                            currentWidth = Math.max(windowMinWidth, Math.min(currentWidth, windowMaxWidth));
-                            currentLeft = Math.max(0, Math.min(currentLeft, windowOffsetLeft + windowWidth - windowMinWidth));
-    
-                            $this.css({
-                                width: currentWidth + 'px',
-                                left: currentLeft + 'px',
-                            });
-                            this.updateContextHeight(currentHeight);
-                        };               
-                    } else {
-                        active = null;
+                        case 'right':
+                            active1 = scaleRight();
+                            active2 = null;
+                            break;
+
+                        case 'top':
+                            active1 = scaleTop();
+                            active2 = null;
+                            break;
+
+                        case 'bottom':
+                            active1 = scaleBottom();
+                            active2 = null;
+                            break;
+                        
+                        case 'left-top':
+                            active1 = scaleLeft();
+                            active2 = scaleTop();
+                            break;
+
+                        case 'right-top':
+                            active1 = scaleRight();
+                            active2 = scaleTop();
+                            break;
+
+                        case 'right-bottom':
+                            active1 = scaleRight();
+                            active2 = scaleBottom();
+                            break;
+
+                        case 'left-bottom':
+                            active1 = scaleLeft();
+                            active2 = scaleBottom();
+                            break;
+
+                        default:
+                            active1 = null;
+                            active2 = null;
                     }
                     
-                    let offActive = () => {
-                        $document.off('mousemove', active);
+                    const offActive = () => {
+                        $document.off('mousemove', active1).off('mousemove', active2);
                         this.setMask();
                         };
-                    $document.mousemove(active).mouseup(offActive);
+
+                    $document.mousemove(active1).mousemove(active2).mouseup(offActive);
                 };
+
             this.$popWindow.mousedown(handler);
         }
 
