@@ -2,9 +2,9 @@ $(document).ready(function() {
     class PopWindow {
         constructor($ele, opts) {
             const defaults =  { //默认值
-                title: 'window',
-                content: 'Please enter content!'
-            };
+                    title: 'window',
+                    content: 'Please enter content!',
+                };
 
             this.$container = $ele;     //容器文件
             this.options = $.extend({}, defaults, opts);
@@ -15,12 +15,11 @@ $(document).ready(function() {
             this.createNode();          //创建节点方法
             this.changeCursor();        //修改光标手势
             this.resize();              //修改窗口尺寸
-            this.moveWindow();                //窗口移动方法
+            this.moveWindow();          //窗口移动方法
             this.destory();             //关闭窗口方法
             this.minWindow();           //最小化窗口
             this.maxWindow();           //最大化窗口
             this.getCurrentWindow();    //获取当前窗口
-            
         }
 
         createNode() {
@@ -43,48 +42,45 @@ $(document).ready(function() {
                         width: options.width + 'px',
                         }).appendTo(this.$container);
             
-            this.updateContextHeight(options.height);
+            this.setContentHeight(options.height);
                        
         }
 
         minWindow() {
-            const _this = this;
             this.$popWindow.find('.contents-min').click(() => {
                 this.$popWindow.find('.pop-window-content').stop().slideToggle();
             });
         }
 
         maxWindow() {
-            const _this = this,
-                  $window = this.$popWindow,
-                  curWindowWidth = $window.width(),
-                  curWindowHeight = $window.height();
-                  
-
-            this.$popWindow.find('.pop-window-max').click(function() {
-                const newWindowWidth = $window.width(),
-                      newWindowHeight = $window.height(),
-                      containerWindth = _this.$container.width(),
-                      containerHeight = _this.$container.height();
+            const $window = this.$popWindow;
+            let isMax = true;                  
+            
+            $window.find('.pop-window-max').on('click',{
+                width: $window.outerWidth(),
+                height: $window.outerHeight(),
+            }, (e) => {
+                const newWindowWidth = $window.outerWidth(),
+                      newWindowHeight = $window.outerHeight(),
+                      containerWindth = this.$container.width(),
+                      containerHeight = this.$container.height();
                 
-                var isMax = true;
-
                 if (isMax) {
                     $window.css({
                             width: containerWindth + 'px',
                             left: 0,
                             top: 0,
                         });
-                    _this.updateContextHeight(containerHeight);
-                    $(this).css('backgroundImage', 'url(./images/max.png)');
-                    isMax = false;
+                    this.setContentHeight(containerHeight);
+                    $window.find('.pop-window-max').css('backgroundImage', 'url(./images/max.png)');
+                    isMax = !isMax;
                 } else {
                     $window.css({
-                            width: _this.options.width + 'px',
+                            width: e.data.width + 'px',
                         });
-                    _this.updateContextHeight(_this.options.height);
-                    $(this).css('backgroundImage', 'url(./images/max2.png)');
-                    isMax = true;
+                    this.setContentHeight(e.data.height);
+                    $window.find('.pop-window-max').css('backgroundImage', 'url(./images/max2.png)');
+                    isMax = !isMax;
                 }
 
             });
@@ -136,7 +132,7 @@ $(document).ready(function() {
                     offActive = () => {                     //鼠标放开时解绑
                         $this.css('cursor', 'auto');        //恢复手势
                         $parent.find('.pop-window-content p').removeClass('unselect');
-                        $document.off('mousemove', active);                   
+                        $document.off('mousemove', active);     
                     };
               
                 $document.mousemove(active).mouseup(offActive);
@@ -152,7 +148,7 @@ $(document).ready(function() {
             });
         }
 
-        updateContextHeight(newHeight) {        //更新内容尺寸
+        setContentHeight(newHeight) {        //更新内容尺寸
             const $window = this.$popWindow,
                   headerHeight = $window.find('.pop-window-header').height(),           //窗口头部高度
                   windowBorderWidth = Number.parseInt($window.css('borderWidth'), 10),  //窗口边框宽度
@@ -271,40 +267,46 @@ $(document).ready(function() {
                         active1 = null,
                         active2 = null;      
 
-                    const scaleLeft = () => {
+                    const scaleLeft = () => {   //左缩放函数
                             return (e) => {
-                                let currentX = e.pageX,
-                                    windowMaxWidth = windowWidth + windowOffsetLeft,
-                                    currentWidth = windowWidth + prevX - currentX,
-                                    currentLeft = windowOffsetLeft + currentX - prevX;
-        
+                                let currentX = e.pageX,     //缩放时当前e的X轴偏移量
+                                    windowMaxWidth = windowWidth + windowOffsetLeft,    //窗口可变最大宽度
+                                    windowMaxLeft = windowOffsetLeft + windowWidth - windowMinWidth,    //窗口可变的最大左偏移量
+                                    currentWidth = windowWidth + prevX - currentX,      //计算得到窗口缩放后的值
+                                    currentLeft = windowOffsetLeft + currentX - prevX;  //计算窗口缩放后的左偏移量
+                                
+                                //限定宽度及左偏移量的范围
                                 currentWidth = Math.max(windowMinWidth, Math.min(currentWidth, windowMaxWidth));
-                                currentLeft = Math.max(0, Math.min(currentLeft, windowOffsetLeft + windowWidth - windowMinWidth));
+                                currentLeft = Math.max(0, Math.min(currentLeft, windowMaxLeft));
         
-                                $this.css({
+                                $this.css({     //设置窗口样式
                                     width: currentWidth + 'px',
                                     left: currentLeft + 'px'
                                 });
                             };
                         },
 
-                        scaleTop = () => {
+                        scaleTop = () => {      //上缩放函数
                             return (e) => {
                                 let currentY = e.pageY,
-                                    windowMaxHeight = windowHeight + windowOffsetTop,
+                                    windowMaxHeight = windowHeight + windowOffsetTop,       //窗口可变最大高度
+                                    windowMaxTop = windowOffsetTop + windowHeight - windowMinHeight,    //窗口可变最大上偏移量
                                     currentHeight = windowHeight + prevY - currentY,
                                     currentTop = windowOffsetTop + currentY - prevY;
-        
+                                
+                                //限定窗口高度和上偏移量的范围
                                 currentHeight = Math.max(windowMinHeight, Math.min(currentHeight, windowMaxHeight));
-                                currentTop = Math.max(0, Math.min(currentTop, windowOffsetTop + windowHeight - windowMinHeight));
+                                currentTop = Math.max(0, Math.min(currentTop, windowMaxTop));
+                                
                                 $this.css({
                                     top: currentTop + 'px'
                                 });
-                                this.updateContextHeight(currentHeight);
+
+                                this.setContentHeight(currentHeight);    //更新内容区高度
                             };
                         },
 
-                        scaleRight = () => {
+                        scaleRight = () => {    //右缩放函数
                             return (e) => {
                                 let currentX = e.pageX,
                                     windowMaxWidth = containerWidth - windowOffsetLeft,
@@ -317,7 +319,7 @@ $(document).ready(function() {
                             };
                         },
 
-                        scaleBottom = () => {
+                        scaleBottom = () => {   //下缩放函数
                             return (e) => {
                                 let currentY = e.pageY,
                                     windowMaxHeight = containerHeight - windowOffsetTop,
@@ -325,11 +327,11 @@ $(document).ready(function() {
                                     
                                 currentHeight = Math.max(windowMinHeight, Math.min(currentHeight, windowMaxHeight));
                                 
-                                this.updateContextHeight(currentHeight);
+                                this.setContentHeight(currentHeight);
                             };
                         };
 
-                    switch (this.mousePosition) {
+                    switch (this.mousePosition) {       //获取鼠标所在位置的关键词
                         case 'left':
                             active1 = scaleLeft();
                             active2 = null;

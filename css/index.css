@@ -83,11 +83,11 @@
   outline: none;
   border: none;
 }
-.pop-window .pop-window-header .window-control button:hover {
+.pop-window .pop-window-header .window-control button:active {
   background-color: #fff;
 }
 .pop-window .pop-window-header .window-control button.contents-min {
-  background: transparent url(../images/min.png) no-repeat;
+  background: rgba(255, 255, 255, 0) url(../images/min.png) left bottom no-repeat;
 }
 .pop-window .pop-window-header .window-control button.pop-window-max {
   background: transparent url(../images/max2.png) no-repeat;

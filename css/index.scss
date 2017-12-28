@@ -93,12 +93,13 @@
                 outline: none;
                 border: none;
 
-                &:hover {
+                &:active {
                     background-color: #fff;
+                    // display: none;
                 }
 
                 &.contents-min {
-                    background: transparent url(../images/min.png) no-repeat;
+                    background: rgba(255, 255, 255, 0) url(../images/min.png) left bottom no-repeat;
                 }
 
                 &.pop-window-max {
@@ -125,6 +126,7 @@
             box-sizing: border-box;
             text-overflow: ellipsis;
             text-align: justify;
+            
         }
     }
 
