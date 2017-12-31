@@ -1,3 +1,7 @@
+$popWindowHeaderHight: 40px;
+$popWindowBorderWidth: 10px;
+$popWindowBorderColor: #7bbdfa;
+$popWindowBorderRadius: 5px;
 .wrapper {
     width: 1200px;
     height: 900px;
@@ -52,38 +56,55 @@
 }
 
 .pop-window {
-    border: 10px solid #7bbdfa;
-    border-radius: 5px;
+    border: $popWindowBorderWidth solid $popWindowBorderColor;
+    border-radius: $popWindowBorderRadius;
     box-shadow: 0 0 10px -2px #000;
     position: absolute;
     box-sizing: border-box;
     background-color: #fff;
+    // overflow: visible !important;
 
 
     .pop-window-header {
-        height: 40px;
-        line-height: 40px;
-        background-color: #7bbdfa;
+        height: $popWindowHeaderHight;
+        line-height: $popWindowHeaderHight;
+        background-color: $popWindowBorderColor;
         display: flex;
         justify-content: space-between;
+        position: absolute;
+        width: 100%;
 
         h2 {
             font-family: '微软雅黑';
             font-size: 20px;
             font-weight: bold;
-            padding-left: 30px;
+            padding-left: 25px;
             display: inline-block;
-            background: url(../images/window.png) left center no-repeat;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
             user-select: none;
+            position: relative;
+
+            &::after {
+                content: '';
+                display: block;
+                width: 20px;
+                height: 20px;
+                border: 1px solid #000;
+                box-sizing: border-box;
+                border-top: 4px solid #000;
+                position: absolute;
+                left: 0;
+                top: 50%;
+                transform: translate(0, -50%);
+            }
         }
 
         .window-control {
-            padding-top: 10px;
             display: flex;
-            justify-content: flex-end;
+            justify-content: space-between;
+            align-items: center;
 
             button {
                 display: block;
@@ -92,49 +113,160 @@
                 padding: 0 3px;
                 outline: none;
                 border: none;
+                box-sizing: border-box;
+                background-color: transparent;
+                cursor: pointer;
+                position: relative;
 
-                &:active {
-                    background-color: #fff;
-                    // display: none;
+                &:hover {
+                    background-color: rgb(162, 204, 255);
+
+                    &.pop-window-max, &.pop-window-small {
+                         &::after, &::before {
+                            box-shadow: 2px -2px 0 10px rgb(162, 204, 255) inset;
+
+                        }
+                    }
+                   
                 }
 
-                &.contents-min {
-                    background: rgba(255, 255, 255, 0) url(../images/min.png) left bottom no-repeat;
+                &.pop-window-min {
+                    &::after {
+                        content: '';
+                        display: block;
+                        width: 14px;
+                        height: 2px;
+                        position: absolute;
+                        bottom: 2px;
+                        background-color: #000;
+                    }
                 }
 
                 &.pop-window-max {
-                    background: transparent url(../images/max2.png) no-repeat;
+                    &::after {
+                        content: '';
+                        display: block;
+                        width: 10px;
+                        height: 10px;
+                        border: 2px solid #000;
+                        position: absolute;
+                        left: 1px;
+                        top: 6px;
+                        box-shadow: 2px -2px 0 10px hsl(209, 93%, 73%) inset;
+                                    
+                    }
+
+                    &::before {
+                        content: '';
+                        display: block;
+                        width: 10px;
+                        height: 10px;
+                        border: 2px solid #000;
+                        position: absolute;
+                        left: 4px;
+                        top: 3px;         
+                    }
+
+                   
+                    }
+
+                &.pop-window-small {
+                    &::after {
+                        content: '';
+                        display: block;
+                        width: 6px;
+                        height: 6px;
+                        border: 2px solid #000;
+                        position: absolute;
+                        left: 3px;
+                        top: 8px;
+                        box-shadow: 2px -2px 0 10px hsl(209, 93%, 73%) inset;
+                    }
+
+                    &::before {
+                        content: '';
+                        display: block;
+                        width: 6px;
+                        height: 6px;
+                        border: 2px solid #000;
+                        position: absolute;
+                        left: 6px;
+                        top: 5px;         
+                    }
+
+
                 }
 
                 &.pop-window-close {
-                    background: transparent url(../images/close.png) no-repeat;
+                    &::after {
+                        content: '';
+                        display: block;
+                        height: 2px;
+                        width: 20px;
+                        background-color: #000;
+                        transform: translate(-50%, -50%) rotate(45deg);
+                        transform-origin: center;
+                        position: absolute;
+                        left: 50%;
+                        top: 50%;
+                    }
+
+                    &::before {
+                        content: '';
+                        display: block;
+                        height: 2px;
+                        width: 20px;
+                        background-color: #000;
+                        position: absolute;
+                        left: 50%;
+                        top: 50%;
+                        transform: translate(-50%, -50%) rotate(-45deg);
+                    }
                 }
             }
         }
     }
 
     .pop-window-content {
+        width: 100%;
+        height: 100%;
         font-size: 18px;
+        border-top: $popWindowHeaderHight solid transparent;
         background-color: #fff;
         box-sizing: border-box;
-        overflow: hidden;
+        // overflow: hidden;
 
         p {
             width: 100%;
+            height: 100%;
             padding: 0 5px;
             word-wrap: break-word; 
             box-sizing: border-box;
+            overflow: hidden;
             text-overflow: ellipsis;
             text-align: justify;
             
         }
     }
 
-    .pop-window-mask {
+    &:not(:last-of-type)::after {
+        content: '';
+        display: block;
+        width: 100%;
+        height: 100%;
         position: absolute;
+        left: -$popWindowBorderWidth;
+        top: -$popWindowBorderWidth;
+        border: $popWindowBorderWidth solid transparent;
+        border-radius: $popWindowBorderRadius;
         background-color: rgba(255, 255, 255, 0.393);
+        pointer-events: none;
     }
 }
 .unselect {
     user-select: none;
+}
+
+.moving {
+    cursor: move;
 }
