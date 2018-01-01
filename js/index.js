@@ -186,9 +186,7 @@ class PopWindow {
             $document.mousemove(active).mouseup(offActive);
         };
 
-        this.$windowHeader.dblclick(() => {
-            this.makeMaxWindow();
-        }).mousedown(handler);  //窗口头部绑定事件
+        this.$windowHeader.mousedown(handler);  //窗口头部绑定事件
     }
 
     destoryWindow() {   //关闭窗口
