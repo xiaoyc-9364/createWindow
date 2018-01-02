@@ -7,10 +7,7 @@ class PopWindow {
             minHeight: 150,
             maxWidth: 600,
             maxHeight: 400,
-        };
-
-        this.status = {             //窗口的当前状态
-            isMin: false,           //是否最小化
+            isCollapsed: false,     //是否最小化
             isMax: false            //是否最大化
         };
 
@@ -23,8 +20,8 @@ class PopWindow {
         this.createNode();          //创建节点方法
         this.addEvent();
         this.changeCursor();        //修改光标手势
-        this.resize();              //修改窗口尺寸
-        this.moveWindow();          //窗口移动方法
+        this.resizeWindow();              //修改窗口尺寸
+        this.dragWindow();          //窗口移动方法
         this.getCurrentWindow();    //获取当前窗口
     }
 
@@ -35,7 +32,7 @@ class PopWindow {
                 <div class="pop-window-header">
                     <h2>${options.title}</h2>
                     <div class="window-control">
-                        <button class="pop-window-min"></button>
+                        <button class="pop-window-collapse"></button>
                         <button class="pop-window-max"></button>
                         <button class="pop-window-close"></button>
                     </div>
@@ -49,7 +46,7 @@ class PopWindow {
                     }).appendTo(this.$container);
         
         this.$windowHeader = this.$popWindow.find('.pop-window-header');
-        this.$minWindowBtn = this.$popWindow.find('.pop-window-min');
+        this.$collapseWindowBtn = this.$popWindow.find('.pop-window-collapse');
         this.$maxWindowBtn = this.$popWindow.find('.pop-window-max');
         this.$closeWindowBtn = this.$popWindow.find('.pop-window-close');           
     }
@@ -79,71 +76,82 @@ class PopWindow {
             this.destoryWindow();
         });
         
-        this.$minWindowBtn.click(() => {
-            this.makeMinWindow();
+        this.$collapseWindowBtn.click(() => {
+            if (this.options.isCollapsed) {
+                this.expandWindow();
+            }else {
+                this.collapseWindow();
+            }
+            this.options.isCollapsed = !this.options.isCollapsed;
         }).dblclick((e) => {
             e.stopPropagation();
         });
 
         this.$maxWindowBtn.click(() => {
-            this.makeMaxWindow();
+            if (this.options.isMax) {
+                this. restoreWindow();
+            } else {
+                this.makeMaxWindow()
+            }
+            this.options.isMax = !this.options.isMax;
+            this.options.isCollapsed = false;
         });
 
         this.$windowHeader.dblclick(() => {
-            this.makeMaxWindow();
+            if (this.options.isMax) {
+                this.restoreWindow();
+            } else {
+                this.makeMaxWindow()
+            }
+            this.options.isMax = !this.options.isMax;
         });
     }
 
-    makeMinWindow() {
+    collapseWindow() {
+        const winData = this.getWindowData();
+        this.oldHeight = winData.height;
 
-        if (this.status.isMin){
-            this.$popWindow.stop().animate({
-                height: this.oldHeight + 'px',
-            }).css('overflow', 'visible');
+        this.$popWindow.css({
+            overflow: 'visible',
+            height: winData.headerHeight + winData.borderWidth * 2 + 'px',
+        });
+    }
 
-        } else {
-            const winData = this.getWindowData();
-            this.oldHeight = winData.height;
+    expandWindow() {
+        this.$popWindow.css({
+            overflow: 'visible',
+            height: this.oldHeight + 'px',
+        });
+    }
 
-            this.$popWindow.stop().animate({
-                height: winData.headerHeight + winData.borderWidth * 2 + 'px',
-            }).css('overflow', 'visible');
-        }
 
-        this.status.isMin = !this.status.isMin;
+    restoreWindow() {
+        this.$popWindow.css({
+            width: this.prevWindowData.width + 'px',
+            height: this.prevWindowData.height + 'px',
+            left: this.prevWindowData.left + 'px',
+            top: this.prevWindowData.top + 'px'
+        });
+        // this.oldHeight = this.prevWindowData.height;
+
+        this.$maxWindowBtn.removeClass('pop-window-small'); 
     }
 
     makeMaxWindow() {
+        const winData = this.getWindowData();
+        this.prevWindowData = winData;
+        this.oldHeight = winData.height; 
+        this.$popWindow.css({
+            width: winData.parentWidth + 'px',
+            height: winData.parentHeight + 'px',
+            left: 0,
+            top: 0
+        });
+        this.$maxWindowBtn.addClass('pop-window-small');
         
-        if (this.status.isMax) {
-            this.$popWindow.css({
-                width: this.prevWindowData.width + 'px',
-                height: this.prevWindowData.height + 'px',
-                left: this.prevWindowData.left + 'px',
-                top: this.prevWindowData.top + 'px'
-            });
-
-            this.$maxWindowBtn.removeClass('pop-window-small');
-
-        } else {
-            const winData = this.getWindowData();
-            this.prevWindowData = winData;
-            this.o
-            this.$popWindow.css({
-                width: winData.parentWidth + 'px',
-                height: winData.parentHeight + 'px',
-                left: 0,
-                top: 0
-            });
-            this.$maxWindowBtn.addClass('pop-window-small');
-            
-            
-        }
-        this.status.isMax = !this.status.isMax;
-        this.status.isMin = false;
     }
 
-    moveWindow() {
+    dragWindow() {
         const handler = (e) => {
             // e.stopPropagation();
             const targetName = e.target.nodeName.toLowerCase(),
@@ -186,9 +194,7 @@ class PopWindow {
             $document.mousemove(active).mouseup(offActive);
         };
 
-        this.$windowHeader.dblclick(() => {
-            this.makeMaxWindow();
-        }).mousedown(handler);  //窗口头部绑定事件
+        this.$windowHeader.mousedown(handler);  //窗口头部绑定事件
     }
 
     destoryWindow() {   //关闭窗口
@@ -272,7 +278,7 @@ class PopWindow {
         this.$popWindow.mousemove(handler);
     }
 
-    resize() {              //窗口缩放方法
+    resizeWindow() {              //窗口缩放方法
         const $document = $(document),
             handler = (e) => {
                 const $this = this.$popWindow,

@@ -50,6 +50,7 @@
   position: absolute;
   box-sizing: border-box;
   background-color: #fff;
+  transition: height 0.5s ease-in-out;
 }
 .pop-window .pop-window-header {
   height: 40px;
@@ -108,7 +109,7 @@
 .pop-window .pop-window-header .window-control button:hover.pop-window-max::after, .pop-window .pop-window-header .window-control button:hover.pop-window-max::before, .pop-window .pop-window-header .window-control button:hover.pop-window-small::after, .pop-window .pop-window-header .window-control button:hover.pop-window-small::before {
   box-shadow: 2px -2px 0 10px #a2ccff inset;
 }
-.pop-window .pop-window-header .window-control button.pop-window-min::after {
+.pop-window .pop-window-header .window-control button.pop-window-collapse::after {
   content: '';
   display: block;
   width: 14px;
@@ -189,6 +190,7 @@
   border-top: 40px solid transparent;
   background-color: #fff;
   box-sizing: border-box;
+  transition: height 0.5s ease-in-out;
 }
 .pop-window .pop-window-content p {
   width: 100%;
@@ -199,6 +201,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   text-align: justify;
+  transition: height 0.5s ease-in-out;
 }
 .pop-window:not(:last-of-type)::after {
   content: '';
