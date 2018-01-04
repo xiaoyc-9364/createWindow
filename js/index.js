@@ -7,7 +7,7 @@ class PopWindow {
             minHeight: 150,
             maxWidth: 600,
             maxHeight: 400,
-            isCollapsed: true,     //是否最小化
+            isCollapsed: false,     //是否最小化
             isMax: false            //是否最大化
         };
 
@@ -84,32 +84,30 @@ class PopWindow {
             e.stopPropagation();
         });
 
-        const maxWindowHanlder = (e) => {
+        const maxWindowHandler = (e) => {
             e.stopPropagation();
             this.$popWindow.removeClass('transition');
             this.makeMaxWindow(this.options.isMax)
             this.options.isMax = !this.options.isMax;
         };
 
-        this.$maxWindowBtn.click(maxWindowHanlder);
+        this.$maxWindowBtn.click(maxWindowHandler);
 
-        this.$windowHeader.dblclick(maxWindowHanlder);
+        this.$windowHeader.dblclick(maxWindowHandler);
     }
 
     collapseWindow(isCollapsed) {
         if (isCollapsed) {
             this.$popWindow.css({
-                overflow: 'visible',
-                height: this.oldHeight || this.options.height + 'px',
+                height: this.oldHeight + 'px'
             });
 
         } else {
             const winData = this.getWindowData();
-            this.oldHeight = winData.height;
+            this.oldHeight = winData.height;        //记录折叠前窗口高度
 
             this.$popWindow.css({
-                overflow: 'visible',
-                height: winData.headerHeight + winData.borderWidth * 2 + 'px',
+                height: winData.headerHeight + winData.borderWidth * 2 + 'px'
             }); 
         } 
     }
@@ -126,7 +124,7 @@ class PopWindow {
             this.oldHeight = this.prevWindowData.height;
         } else {
             const winData = this.getWindowData();
-            this.prevWindowData = winData;
+            this.prevWindowData = winData;          //记录窗口最大化前的状态
             this.oldHeight = winData.height;
             this.$popWindow.css({
                 width: winData.parentWidth + 'px',
