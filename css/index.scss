@@ -62,9 +62,11 @@ $popWindowBorderRadius: 5px;
     position: absolute;
     box-sizing: border-box;
     background-color: #fff;
-    transition: height 0.5s ease-in-out;
     // overflow: visible !important;
-
+    
+    &.transition {
+        transition: height 0.5s ease-in-out;
+    }
 
     .pop-window-header {
         height: $popWindowHeaderHight;
@@ -271,7 +273,9 @@ $popWindowBorderRadius: 5px;
 .unselect {
     user-select: none;
 }
-
+.select {
+    user-select: auto;
+}
 .moving {
     cursor: move;
 }

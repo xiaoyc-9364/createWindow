@@ -50,6 +50,8 @@
   position: absolute;
   box-sizing: border-box;
   background-color: #fff;
+}
+.pop-window.transition {
   transition: height 0.5s ease-in-out;
 }
 .pop-window .pop-window-header {
@@ -219,6 +221,10 @@
 
 .unselect {
   user-select: none;
+}
+
+.select {
+  user-select: auto;
 }
 
 .moving {
