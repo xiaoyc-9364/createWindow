@@ -19,10 +19,10 @@ class PopWindow {
     init() {                        //初始化方法
         this.createNode();          //创建节点方法
         this.addEvent();
+        this.getCurrentWindow();    //获取当前窗口
         this.changeCursor();        //修改光标手势
         this.resizeWindow();              //修改窗口尺寸
         this.dragWindow();          //窗口移动方法
-        this.getCurrentWindow();    //获取当前窗口
     }
 
     createNode() {
@@ -85,7 +85,7 @@ class PopWindow {
         });
 
         const maxWindowHandler = (e) => {
-            e.stopPropagation();
+            // e.stopPropagation();
             this.$popWindow.removeClass('transition');
             this.makeMaxWindow(this.options.isMax)
             this.options.isMax = !this.options.isMax;
@@ -138,7 +138,6 @@ class PopWindow {
 
     dragWindow() {
         const handler = (e) => {
-            e.stopPropagation();
             const targetName = e.target.nodeName.toLowerCase(),
                   $document = $(document);
             //控制窗口的按钮不可用来移动窗口
